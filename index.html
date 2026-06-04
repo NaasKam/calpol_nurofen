@@ -1,28 +1,246 @@
 <!DOCTYPE html>
 <html>
 <head>
-<meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="CalNur">
-<link rel="manifest" href="manifest.json">
 <title>CalNur</title>
+
+<style>
+body{font-family:-apple-system;background:#f2f2f7;padding:20px}
+.page{display:none}
+.active{display:block}
+.card{background:white;border-radius:22px;padding:20px;margin-bottom:15px}
+button,input,select{width:100%;padding:15px;border-radius:16px;margin:6px 0;font-size:16px;box-sizing:border-box}
+button{border:0;color:white}
+.green{background:#34c759}.blue{background:#007aff}.red{background:#d62828}.orange{background:#f77f00}.grey{background:#555}
+.row{display:flex;gap:15px}
+.row div{flex:1}
+.item{background:#eee;border-radius:12px;padding:10px;margin:6px}
+.done{opacity:.5;text-decoration:line-through}
+.credit{text-align:center;font-size:9px;opacity:.45}
+</style>
 </head>
 
 <body>
 
-<h1>💊 CalNur</h1>
-
+<div id="welcome" class="page active">
+<div class="card">
+<h2>💊 Welcome to CalNur</h2>
+<p>⚠️ CalNur is not medical advice. It only creates reminders using timing rules set in the app.</p>
 <p>
-CalNur medication timing assistant.
+Default rules:<br>
+🔴 Calpol every 6 hours<br>
+🟠 Nurofen every 8 hours<br>
+🔴➡️🟠 First Nurofen 2 hours after Calpol
 </p>
+<p>Always read medication instructions and consult your doctor/pharmacist before taking medication.</p>
+<button class="green" onclick="openPage('rules')">I Understand & Continue</button>
+</div>
+</div>
 
-<p>
-This application is not medical advice.
-It only creates reminders based on configured timing rules.
-</p>
 
-<script src="app.js"></script>
+<div id="rules" class="page">
+<div class="card">
+<h2>⚙️ Timing Rules</h2>
 
+<label>Calpol hours</label>
+<input id="cal" type="number" value="6">
+
+<label>Nurofen hours</label>
+<input id="nur" type="number" value="8">
+
+<label>First Nurofen delay</label>
+<input id="delay" type="number" value="2">
+
+<button class="green" onclick="saveRules()">Save & Continue</button>
+<button class="grey" onclick="openPage('welcome')">Back</button>
+</div>
+</div>
+
+
+<div id="main" class="page">
+
+<div class="card">
+<h2>🕒 Starting Time</h2>
+
+<div class="row">
+<div>
+Hours
+<select id="hour"></select>
+</div>
+
+<div>
+Minutes
+<select id="minute"></select>
+</div>
+</div>
+
+</div>
+
+
+<div class="card">
+
+<h2>💊 CalNur</h2>
+
+<button class="red" onclick="createPlan('calpol')">🔴 Start Calpol Plan</button>
+<button class="orange" onclick="createPlan('nurofen')">🟠 Start Nurofen Plan</button>
+<button class="blue" onclick="createPlan('both')">🔴🟠 Combined Plan</button>
+
+<button class="grey" onclick="openPage('rules')">⚙️ Edit Timing Rules</button>
+
+</div>
+
+
+<div class="card">
+
+<h3>📅 Checklist</h3>
+<div id="list"></div>
+
+<button class="blue" onclick="showHistory()">📖 View History</button>
+<button class="grey" onclick="clearAll()">🗑 Clear Data</button>
+
+</div>
+
+<div class="credit">Created by AI genius Kamil K</div>
+
+</div>
+
+
+<script>
+
+function openPage(id){
+document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));
+document.getElementById(id).classList.add("active");
+}
+
+let rules=JSON.parse(localStorage.rules||'{"cal":6,"nur":8,"delay":2}');
+let checklist=JSON.parse(localStorage.checklist||"[]");
+let historyData=JSON.parse(localStorage.historyData||"[]");
+
+
+for(let i=0;i<24;i++)
+hour.innerHTML += "<option>"+String(i).padStart(2,'0')+"</option>";
+
+for(let i=0;i<60;i++)
+minute.innerHTML += "<option>"+String(i).padStart(2,'0')+"</option>";
+
+let now=new Date();
+hour.value=String(now.getHours()).padStart(2,'0');
+minute.value=String(now.getMinutes()).padStart(2,'0');
+
+
+if(localStorage.accepted=="yes"){
+openPage("main");
+}
+
+
+function saveRules(){
+
+rules={
+cal:Number(cal.value),
+nur:Number(nur.value),
+delay:Number(delay.value)
+};
+
+localStorage.rules=JSON.stringify(rules);
+localStorage.accepted="yes";
+
+openPage("main");
+
+}
+
+
+function createPlan(type){
+
+let start=new Date();
+start.setHours(hour.value);
+start.setMinutes(minute.value);
+
+let end=new Date(start);
+end.setHours(end.getHours()+24);
+
+checklist=[];
+
+function add(m,t,step){
+
+while(t<=end){
+checklist.push({med:m,time:t.toISOString(),done:false,skip:false});
+t.setHours(t.getHours()+step);
+}
+
+}
+
+if(type=="calpol"||type=="both") add("Calpol",new Date(start),rules.cal);
+if(type=="nurofen") add("Nurofen",new Date(start),rules.nur);
+
+if(type=="both"){
+let n=new Date(start);
+n.setHours(n.getHours()+rules.delay);
+add("Nurofen",n,rules.nur);
+}
+
+checklist.sort((a,b)=>new Date(a.time)-new Date(b.time));
+
+save();
+draw();
+
+}
+
+
+function taken(i){
+checklist[i].done=true;
+historyData.push(checklist[i]);
+save();
+draw();
+}
+
+function skip(i){
+checklist[i].skip=true;
+save();
+draw();
+}
+
+function save(){
+localStorage.checklist=JSON.stringify(checklist);
+localStorage.historyData=JSON.stringify(historyData);
+}
+
+
+function draw(){
+
+list.innerHTML="";
+
+checklist.forEach((x,i)=>{
+
+list.innerHTML+=
+"<div class='item "+(x.done?'done':'')+(x.skip?'done':'')+"'>"+ 
+(x.done?"✅ ":"")+ 
+(x.skip?"⏭️ ":"")+
+(x.med=="Calpol"?"🔴 ":"🟠 ")+
+new Date(x.time).toLocaleTimeString()+" "+x.med+
+(!x.done&&!x.skip?
+"<button class='green' onclick='taken("+i+")'>✅ Dose Taken</button>"+
+"<button class='grey' onclick='skip("+i+")'>⏭️ Skip Dose</button>"
+:"")+
+"</div>";
+
+});
+
+}
+
+
+function showHistory(){
+alert(historyData.map(x=>x.med+" "+new Date(x.time).toLocaleString()).join("\n") || "No history yet");
+}
+
+
+function clearAll(){
+localStorage.clear();
+location.reload();
+}
+
+draw();
+
+</script>
 </body>
 </html>
