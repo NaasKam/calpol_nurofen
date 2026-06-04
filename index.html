@@ -3,22 +3,301 @@
 <head>
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#007aff">
 <title>CalNur</title>
 
 <style>
-body{font-family:-apple-system;background:#f2f2f7;padding:20px}
-.page{display:none}.active{display:block}
-.card{background:white;border-radius:22px;padding:20px;margin-bottom:15px}
-button,input,select{width:100%;padding:15px;border-radius:16px;margin:6px 0;font-size:16px;box-sizing:border-box}
-button{border:0;color:white;transition:.2s}
-button:active{transform:scale(.95)}
-.red{background:#d62828}.orange{background:#f77f00}.blue{background:#007aff}.green{background:#34c759}.grey{background:#555}
-.row{display:flex;gap:15px}.row div{flex:1;text-align:center}
-select{font-size:32px;background:#eee;border:0}
-.item{background:#eee;border-radius:12px;padding:10px;margin:6px}
-.done{opacity:.5;text-decoration:line-through}
-.timer{text-align:center;font-size:32px;font-weight:bold}
-.credit{text-align:center;font-size:9px;opacity:.45;margin-top:20px}
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+:root {
+  --primary: #007aff;
+  --red: #d62828;
+  --orange: #f77f00;
+  --green: #34c759;
+  --grey: #555;
+  --light-grey: #f2f2f7;
+  --card-bg: #ffffff;
+  --text-primary: #000;
+  --text-secondary: #666;
+  --border-radius: 24px;
+  --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --light-grey: #1c1c1e;
+    --card-bg: #2c2c2e;
+    --text-primary: #fff;
+    --text-secondary: #999;
+  }
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  background: var(--light-grey);
+  color: var(--text-primary);
+  padding: 16px;
+  min-height: 100vh;
+}
+
+.page {
+  display: none;
+  animation: fadeIn 0.4s ease-in;
+}
+
+.page.active {
+  display: block;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.card {
+  background: var(--card-bg);
+  border-radius: var(--border-radius);
+  padding: 24px;
+  margin-bottom: 16px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+  transition: var(--transition);
+}
+
+.card:hover {
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
+}
+
+h2 {
+  font-size: 28px;
+  font-weight: 700;
+  margin-bottom: 20px;
+  letter-spacing: -0.5px;
+}
+
+h3 {
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 16px;
+  color: var(--text-primary);
+}
+
+p {
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--text-secondary);
+  margin-bottom: 12px;
+}
+
+label {
+  display: block;
+  font-weight: 600;
+  font-size: 15px;
+  margin-bottom: 8px;
+  color: var(--text-primary);
+}
+
+input, select {
+  width: 100%;
+  padding: 14px 16px;
+  border-radius: 12px;
+  margin: 8px 0;
+  font-size: 16px;
+  border: 2px solid var(--light-grey);
+  background: var(--card-bg);
+  color: var(--text-primary);
+  transition: var(--transition);
+  font-family: inherit;
+}
+
+input:focus, select:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.1);
+}
+
+button {
+  width: 100%;
+  padding: 16px;
+  border: 0;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 600;
+  color: white;
+  cursor: pointer;
+  transition: var(--transition);
+  margin: 8px 0;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+button:active {
+  transform: scale(0.98);
+}
+
+.red { background: var(--red); }
+.red:hover { box-shadow: 0 8px 20px rgba(214, 40, 40, 0.3); }
+
+.orange { background: var(--orange); }
+.orange:hover { box-shadow: 0 8px 20px rgba(247, 127, 0, 0.3); }
+
+.blue { background: var(--primary); }
+.blue:hover { box-shadow: 0 8px 20px rgba(0, 122, 255, 0.3); }
+
+.green { background: var(--green); }
+.green:hover { box-shadow: 0 8px 20px rgba(52, 199, 89, 0.3); }
+
+.grey { background: var(--grey); }
+.grey:hover { box-shadow: 0 8px 20px rgba(85, 85, 85, 0.3); }
+
+.row {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.row div {
+  flex: 1;
+}
+
+.row label {
+  margin-bottom: 8px;
+  text-align: center;
+}
+
+.row select {
+  margin: 0;
+}
+
+.item {
+  background: var(--light-grey);
+  border-radius: 16px;
+  padding: 16px;
+  margin: 8px 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: var(--transition);
+  border-left: 4px solid transparent;
+}
+
+.item:hover {
+  background: rgba(0, 122, 255, 0.05);
+}
+
+.item.done {
+  opacity: 0.6;
+  text-decoration: line-through;
+  border-left-color: var(--green);
+}
+
+.item-text {
+  flex: 1;
+  font-size: 15px;
+  font-weight: 500;
+}
+
+.item-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.item-actions button {
+  padding: 8px 12px;
+  margin: 0;
+  width: auto;
+  font-size: 13px;
+  border-radius: 8px;
+}
+
+.timer {
+  text-align: center;
+  font-size: 48px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  background: linear-gradient(135deg, var(--primary), #0051d5);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin: 24px 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.next-dose-info {
+  text-align: center;
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 16px;
+  color: var(--text-primary);
+}
+
+.credit {
+  text-align: center;
+  font-size: 12px;
+  opacity: 0.5;
+  margin-top: 20px;
+  color: var(--text-secondary);
+}
+
+.warning {
+  background: rgba(255, 193, 7, 0.1);
+  border-left: 4px solid #ffc107;
+  border-radius: 8px;
+  padding: 12px;
+  margin: 12px 0;
+  font-size: 14px;
+  color: var(--text-primary);
+}
+
+.info-box {
+  background: rgba(0, 122, 255, 0.1);
+  border-left: 4px solid var(--primary);
+  border-radius: 8px;
+  padding: 12px;
+  margin: 12px 0;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.button-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.button-grid button {
+  margin: 0;
+  width: 100%;
+}
+
+@media (min-width: 768px) {
+  body {
+    max-width: 500px;
+    margin: 0 auto;
+    padding: 24px;
+  }
+  
+  .button-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 480px) {
+  h2 {
+    font-size: 24px;
+  }
+  
+  .timer {
+    font-size: 36px;
+  }
+  
+  .button-grid {
+    grid-template-columns: 1fr;
+  }
+}
 </style>
 </head>
 
@@ -28,111 +307,130 @@ select{font-size:32px;background:#eee;border:0}
 <div class="card">
 <h2>💊 Welcome to CalNur</h2>
 
-<p>⚠️ CalNur is not a medical device and does not provide medical advice.</p>
+<div class="warning">
+⚠️ CalNur is not a medical device and does not provide medical advice. Always consult a healthcare professional.
+</div>
 
-<p>This app only creates reminder times using rules configured by you.</p>
+<p>This app creates reminders based on your selected timing rules for managing medication schedules.</p>
 
-<p>
-Default rules:<br>
-🔴 Calpol every 6 hours<br>
-🟠 Nurofen every 8 hours<br>
-🔴➡️🟠 First Nurofen 2 hours after Calpol
-</p>
+<div class="info-box">
+<strong>📋 Default Settings:</strong><br>
+🔴 Calpol: every 6 hours<br>
+🟠 Nurofen: every 8 hours<br>
+🔴➡️🟠 First Nurofen: 2 hours after Calpol
+</div>
 
-<p>Always read medication instructions and consult your doctor/pharmacist before giving or taking medication.</p>
+<p style="font-size: 13px; margin-top: 16px;">Always read medication instructions and consult a doctor or pharmacist before giving medication to children.</p>
 
-<button class="green" onclick="page('rules')">I Understand & Continue</button>
+<button class="green" onclick="page('rules')" style="margin-top: 20px;">I Understand & Continue</button>
+
 </div>
 </div>
 
 
 <div id="rules" class="page">
 <div class="card">
-
 <h2>⚙️ Timing Rules</h2>
 
-<label>🔴 Calpol interval (hours)</label>
-<input id="calRule" type="number">
+<label>🔴 Calpol Interval (hours)</label>
+<input id="calRule" type="number" min="1" max="24" placeholder="e.g., 6">
 
-<label>🟠 Nurofen interval (hours)</label>
-<input id="nurRule" type="number">
+<label style="margin-top: 16px;">🟠 Nurofen Interval (hours)</label>
+<input id="nurRule" type="number" min="1" max="24" placeholder="e.g., 8">
 
-<label>🔴➡️🟠 First Nurofen delay</label>
-<input id="delayRule" type="number">
+<label style="margin-top: 16px;">🔴➡️🟠 First Nurofen After Calpol (hours)</label>
+<input id="delayRule" type="number" min="0" max="12" placeholder="e.g., 2">
 
-<button class="green" onclick="saveRules()">Save & Continue</button>
+<div style="display: flex; gap: 12px; margin-top: 20px;">
+<button class="green" onclick="saveRules()" style="flex: 1;">Save Rules</button>
+<button class="grey" onclick="page('main')" style="flex: 1;">Cancel</button>
+</div>
 
 </div>
 </div>
 
 
 <div id="main" class="page">
-
 <div class="card">
-
 <h2>🕒 Starting Time</h2>
 
-<div class="row">
+<p style="margin-bottom: 16px;">Select when to start the medication schedule</p>
 
+<div class="row">
 <div>
-Hours
+<label>Hours</label>
 <select id="hour"></select>
 </div>
 
 <div>
-Minutes
+<label>Minutes</label>
 <select id="minute"></select>
 </div>
-
 </div>
 
-<button class="green" onclick="currentTime()">🕒 Use Current Time</button>
-
-</div>
-
-
-<div class="card">
-
-<h2>💊 CalNur</h2>
-
-<button class="red" onclick="createPlan('calpol')">🔴 Start Calpol Plan</button>
-<button class="orange" onclick="createPlan('nurofen')">🟠 Start Nurofen Plan</button>
-<button class="blue" onclick="createPlan('both')">🔴🟠 Combined Plan</button>
-
-<button class="grey" onclick="editRules()">⚙️ Edit Timing Rules</button>
+<button class="blue" onclick="currentTime()">📍 Use Current Time</button>
 
 </div>
 
 
 <div class="card">
+<h2>💊 Choose Plan</h2>
 
-<h3>⏰ Next Dose Countdown</h3>
+<p style="margin-bottom: 20px;">Select which medication schedule to start</p>
 
-<div id="next"></div>
+<button class="red" onclick="createPlan('calpol')">🔴 Start Calpol Only</button>
 
-<div id="timer" class="timer">--</div>
+<button class="orange" onclick="createPlan('nurofen')">🟠 Start Nurofen Only</button>
+
+<button class="blue" onclick="createPlan('both')">🔴🟠 Start Combined Plan</button>
+
+<button class="grey" onclick="editRules()" style="margin-top: 20px;">⚙️ Edit Timing Rules</button>
+
+</div>
+
+<div class="credit">Created with ❤️ by Kamil K</div>
+
+</div>
+
+
+<div id="tracker" class="page">
+<div class="card">
+<h2>💊 CalNur Tracker</h2>
+
+<button class="grey" onclick="page('main')">⬅️ Change Plan</button>
 
 </div>
 
 
 <div class="card">
+<h3>⏰ Next Dose</h3>
 
-<h3>📅 Checklist</h3>
+<div class="next-dose-info" id="next">Loading...</div>
+
+<div class="timer" id="timer">--:--:--</div>
+
+</div>
+
+
+<div class="card">
+<h3>📅 Today's Schedule</h3>
 
 <div id="list"></div>
 
-<button class="blue" onclick="historyView()">📖 View History</button>
-
-<button class="blue" onclick="exportPDF()">📄 Export PDF</button>
-
-<button class="grey" onclick="clearData()">🗑 Clear Data</button>
-
 </div>
 
 
-<div class="credit">
-Created by AI genius Kamil K
+<div class="card">
+<div class="button-grid">
+<button class="blue" onclick="historyView()">📖 History</button>
+<button class="blue" onclick="exportPDF()">📄 Export</button>
 </div>
+
+<button class="grey" onclick="clearData()" style="margin-top: 12px;">🗑️ Clear Plan</button>
+
+</div>
+
+<div class="credit">Created with ❤️ by Kamil K</div>
 
 </div>
 
@@ -172,7 +470,12 @@ minute.value=String(d.getMinutes()).padStart(2,'0');
 currentTime();
 
 
-if(localStorage.accepted=="yes") page("main");
+if(localStorage.accepted=="yes"){
+if(checklist.length>0)
+page("tracker");
+else
+page("main");
+}
 
 
 function saveRules(){
@@ -254,7 +557,10 @@ add("Nurofen",n,rules.nur);
 checklist.sort((a,b)=>new Date(a.time)-new Date(b.time));
 
 save();
+
 draw();
+
+page("tracker");
 
 }
 
@@ -265,10 +571,11 @@ checklist[i].done=true;
 
 historyData.push({
 med:checklist[i].med,
-time:new Date().toISOString()
+time:checklist[i].time
 });
 
 save();
+
 draw();
 
 }
@@ -298,13 +605,18 @@ list.innerHTML="";
 checklist.forEach((x,i)=>{
 
 list.innerHTML+=
-"<div class='item "+(x.done?'done':'')+"'>"+ (x.done?"✅ ":"")+
-(x.skip?"⏭️ ":"")+
+"<div class='item "+(x.done||x.skip?'done':'')+"'>"+
+"<div class='item-text'>"+
+(x.done?"✅ ":x.skip?"⏭️ ":"")+
 (x.med=="Calpol"?"🔴 ":"🟠 ")+
-new Date(x.time).toLocaleTimeString()+" "+x.med+
+new Date(x.time).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})+
+" "+x.med+
+"</div>"+
 (!x.done&&!x.skip?
-"<button class=green onclick='taken("+i+")'> ✅ Dose Taken</button>"+
-"<button class=grey onclick='skip("+i+")'> ⏭️ Skip Dose</button>"
+"<div class='item-actions'>"+
+"<button class='green' onclick='taken("+i+")'>✅</button>"+
+"<button class='grey' onclick='skip("+i+")'>⏭️</button>"+
+"</div>"
 :"")+
 "</div>";
 
@@ -321,12 +633,21 @@ if(n){
 
 let diff=new Date(n.time)-new Date();
 
-next.innerHTML=(n.med=="Calpol"?"🔴 ":"🟠 ")+n.med;
+next.innerHTML=(n.med=="Calpol"?"🔴 ":"🟠 ")+n.med+" due in";
+
+let hours=Math.floor(diff/3600000);
+let minutes=Math.floor(diff%3600000/60000);
+let seconds=Math.floor(diff%60000/1000);
 
 timer.innerHTML=
-Math.floor(diff/3600000)+"h "+
-Math.floor(diff%3600000/60000)+"m "+
-Math.floor(diff%60000/1000)+"s";
+String(hours).padStart(2,'0')+":"+
+String(minutes).padStart(2,'0')+":"+
+String(seconds).padStart(2,'0');
+
+}else{
+
+next.innerHTML="✅ All doses completed";
+timer.innerHTML="--:--:--";
 
 }
 
@@ -335,17 +656,40 @@ Math.floor(diff%60000/1000)+"s";
 
 function historyView(){
 
-alert(historyData.map(x=>x.med+" "+new Date(x.time).toLocaleString()).join("\n")||"No history");
+if(historyData.length===0){
+alert("No medication history yet.");
+return;
+}
+
+let msg=historyData.map(x=>
+(x.med=="Calpol"?"🔴 ":"🟠 ")+
+x.med+" - "+
+new Date(x.time).toLocaleString()
+).join("\n");
+
+alert("📖 Medication History\n\n"+msg);
 
 }
 
 
 function exportPDF(){
 
+let content="CalNur - Medication History\n";
+content+="Generated: "+new Date().toLocaleString()+"\n";
+content+="================================\n\n";
+
+if(historyData.length===0){
+content+="No medication history to export.";
+}else{
+content+=historyData.map(x=>
+(x.med=="Calpol"?"🔴 ":"🟠 ")+
+x.med+" - "+
+new Date(x.time).toLocaleString()
+).join("\n");
+}
+
 let w=window.open();
-
-w.document.write("<pre>"+JSON.stringify(historyData,null,2)+"</pre>");
-
+w.document.write("<pre style='font-family:monospace;padding:20px;'>"+content+"</pre>");
 w.print();
 
 }
@@ -353,8 +697,17 @@ w.print();
 
 function clearData(){
 
-localStorage.clear();
-location.reload();
+if(confirm("Clear the current plan and return to setup?")){
+
+checklist=[];
+
+localStorage.removeItem("checklist");
+
+draw();
+
+page("main");
+
+}
 
 }
 
