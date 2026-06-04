@@ -1,4 +1,3 @@
-
 self.addEventListener('install',e=>{
 e.waitUntil(caches.open('dose').then(c=>c.addAll(['./','index.html'])));
 });
