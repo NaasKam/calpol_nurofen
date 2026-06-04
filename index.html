@@ -8,85 +8,41 @@
 <style>
 body{font-family:-apple-system;background:#f2f2f7;padding:20px}
 .card{background:white;border-radius:22px;padding:20px;margin-bottom:15px}
-button{width:100%;padding:15px;border:0;border-radius:16px;margin:6px;color:white;font-size:16px}
+button,select{
+width:100%;padding:15px;border-radius:16px;margin:6px 0;font-size:16px
+}
+button{border:0;color:white}
 .red{background:#d62828}
 .orange{background:#f77f00}
 .blue{background:#007aff}
 .green{background:#34c759}
 .grey{background:#555}
-
-.picker{
-display:flex;
-justify-content:center;
-gap:20px;
-font-size:42px;
-font-weight:bold;
-}
-
-select{
-font-size:38px;
-height:90px;
-border:0;
-background:#eee;
-border-radius:15px;
-text-align:center;
-}
-
-.item{
-background:#eee;
-border-radius:12px;
-padding:10px;
-margin:6px
-}
-
-.timer{
-font-size:32px;
-text-align:center;
-font-weight:bold
-}
-
-.credit{
-font-size:9px;
-opacity:.45;
-text-align:center
-}
+.item{background:#eee;border-radius:12px;padding:10px;margin:6px}
+.done{opacity:.5;text-decoration:line-through}
+.timer{text-align:center;font-size:32px;font-weight:bold}
+.credit{text-align:center;font-size:9px;opacity:.45}
 </style>
 </head>
 
 <body>
 
 <div class="card">
-
-<h2>🗒 Start Time</h2>
-
-<div class="picker">
-
-<select id="hour"></select>
-:
-<select id="minute"></select>
-
-</div>
-
-<button class="green" onclick="setNow()">
-Use Current Time
-</button>
-
-</div>
-
-
-<div class="card">
-
 <h2>💊 CalNur</h2>
 
-<button class="red" onclick="createPlan('calpol')">
+<select id="hour"></select>
+<select id="minute"></select>
+
+<button class="green" onclick="setNow()">Use Current Time</button>
+
+<button class="red" onclick="startPlan('calpol')">
 🔴 Start Calpol Plan
 </button>
 
-<button class="orange" onclick="createPlan('nurofen')">
+<button class="orange" onclick="startPlan('nurofen')">
 🟠 Start Nurofen Plan
 </button>
 
-<button class="blue" onclick="createPlan('both')">
+<button class="blue" onclick="startPlan('both')">
 🔴🟠 Start Calpol + Nurofen Plan
 </button>
 
@@ -98,17 +54,29 @@ Use Current Time
 <h3>⏰ Next Dose</h3>
 
 <div id="next"></div>
-
-<div class="timer" id="timer">--</div>
+<div id="timer" class="timer">--</div>
 
 </div>
 
 
 <div class="card">
 
-<h3>📅 Checklist</h3>
+<h3>📅 Today's Checklist</h3>
 
-<div id="plan"></div>
+<div id="list"></div>
+
+<button class="blue" onclick="showHistory()">📖 View History</button>
+
+<button class="grey" onclick="clearData()">🗑 Clear Data</button>
+
+</div>
+
+
+<div class="card" id="historyBox" style="display:none">
+
+<h3>📖 History</h3>
+
+<div id="history"></div>
 
 </div>
 
@@ -120,24 +88,20 @@ Created by AI genius Kamil K
 
 <script>
 
-let doses=JSON.parse(localStorage.doses||"[]");
+let checklist=JSON.parse(localStorage.checklist||"[]");
+
+let historyData=JSON.parse(localStorage.historyData||"[]");
+
+let savedPlan=localStorage.planType||"";
+
+let savedDate=localStorage.date||"";
 
 
-// create iOS style wheels
+for(let i=0;i<24;i++)
+hour.innerHTML+="<option>"+String(i).padStart(2,'0')+"</option>";
 
-for(let i=0;i<24;i++){
-
-hour.innerHTML+=
-"<option>"+String(i).padStart(2,'0')+"</option>";
-
-}
-
-for(let i=0;i<60;i++){
-
-minute.innerHTML+=
-"<option>"+String(i).padStart(2,'0')+"</option>";
-
-}
+for(let i=0;i<60;i++)
+minute.innerHTML+="<option>"+String(i).padStart(2,'0')+"</option>";
 
 
 function setNow(){
@@ -150,34 +114,36 @@ minute.value=String(d.getMinutes()).padStart(2,'0');
 
 }
 
-
 setNow();
 
 
-function selectedTime(){
+// new day reset checklist but keep plan
 
-let d=new Date();
+let today=new Date().toDateString();
 
-d.setHours(hour.value);
+if(savedDate && savedDate!=today && savedPlan){
 
-d.setMinutes(minute.value);
-
-d.setSeconds(0);
-
-return d;
+startPlan(savedPlan);
 
 }
 
+localStorage.date=today;
 
-function createPlan(type){
 
-let start=selectedTime();
+function startPlan(type){
+
+localStorage.planType=type;
+
+let start=new Date();
+
+start.setHours(hour.value);
+
+start.setMinutes(minute.value);
 
 let end=new Date(start);
-
 end.setHours(end.getHours()+24);
 
-doses=[];
+checklist=[];
 
 
 if(type=="calpol"||type=="both"){
@@ -186,7 +152,7 @@ let c=new Date(start);
 
 while(c<=end){
 
-doses.push({
+checklist.push({
 med:"Calpol",
 time:c.toISOString(),
 done:false,
@@ -206,7 +172,7 @@ let n=new Date(start);
 
 while(n<=end){
 
-doses.push({
+checklist.push({
 med:"Nurofen",
 time:n.toISOString(),
 done:false,
@@ -223,12 +189,11 @@ n.setHours(n.getHours()+8);
 if(type=="both"){
 
 let n=new Date(start);
-
 n.setHours(n.getHours()+2);
 
 while(n<=end){
 
-doses.push({
+checklist.push({
 med:"Nurofen",
 time:n.toISOString(),
 done:false,
@@ -242,6 +207,8 @@ n.setHours(n.getHours()+8);
 }
 
 
+checklist.sort((a,b)=>new Date(a.time)-new Date(b.time));
+
 save();
 draw();
 
@@ -250,7 +217,12 @@ draw();
 
 function taken(i){
 
-doses[i].done=true;
+checklist[i].done=true;
+
+historyData.push({
+med:checklist[i].med,
+time:new Date().toISOString()
+});
 
 save();
 draw();
@@ -260,7 +232,7 @@ draw();
 
 function skip(i){
 
-doses[i].skip=true;
+checklist[i].skip=true;
 
 save();
 draw();
@@ -270,19 +242,23 @@ draw();
 
 function save(){
 
-localStorage.doses=JSON.stringify(doses);
+localStorage.checklist=JSON.stringify(checklist);
+
+localStorage.historyData=JSON.stringify(historyData);
 
 }
 
 
 function draw(){
 
-plan.innerHTML="";
+list.innerHTML="";
 
-doses.forEach((x,i)=>{
+checklist
+.sort((a,b)=>new Date(a.time)-new Date(b.time))
+.forEach((x,i)=>{
 
-plan.innerHTML+=
-"<div class=item>"+
+list.innerHTML+=
+"<div class='item "+(x.done?'done':'')+"'>"+ 
 (x.done?"✅ ":"")+
 (x.skip?"⏭️ ":"")+
 (x.med=="Calpol"?"🔴 ":"🟠 ")+
@@ -301,9 +277,40 @@ new Date(x.time).toLocaleTimeString()+
 }
 
 
+function showHistory(){
+
+historyBox.style.display="block";
+
+history.innerHTML="";
+
+historyData.forEach(x=>{
+
+history.innerHTML+=
+"<div class=item>"+
+x.med+" "+
+new Date(x.time).toLocaleString()+
+"</div>";
+
+});
+
+}
+
+
+function clearData(){
+
+if(confirm("Clear all data?")){
+
+localStorage.clear();
+location.reload();
+
+}
+
+}
+
+
 setInterval(()=>{
 
-let nextDose=doses.find(x=>
+let nextDose=checklist.find(x=>
 !x.done&&!x.skip&&new Date(x.time)>new Date()
 );
 
@@ -311,8 +318,7 @@ if(nextDose){
 
 let diff=new Date(nextDose.time)-new Date();
 
-next.innerHTML=
-(nextDose.med=="Calpol"?"🔴 ":"🟠 ")+nextDose.med;
+next.innerHTML=nextDose.med;
 
 timer.innerHTML=
 Math.floor(diff/3600000)+"h "+
