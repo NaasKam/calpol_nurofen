@@ -4,108 +4,355 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <link rel="manifest" href="manifest.json">
-<title>Dose Pro</title>
+
+<title>Dose Scheduler Ultimate</title>
+
 <style>
-body{font-family:-apple-system;background:#f2f2f7;padding:20px}
-.card{background:white;padding:20px;border-radius:18px}
-button{width:100%;padding:15px;margin:8px;border-radius:12px}
-.button-group{display:flex;gap:10px;margin:8px 0}
-.button-group button{flex:1;margin:0}
-.dose-entry{background:#f9f9f9;padding:12px;margin:8px 0;border-radius:8px;border-left:4px solid #007AFF}
-.history-entry{background:#f9f9f9;padding:10px;margin:6px 0;border-radius:8px}
+:root{
+--bg:#f2f2f7;
+--card:white;
+--text:black;
+}
+
+.dark{
+--bg:#000;
+--card:#1c1c1e;
+--text:white;
+}
+
+body{
+font-family:-apple-system;
+background:var(--bg);
+color:var(--text);
+padding:20px;
+}
+
+.card{
+background:var(--card);
+border-radius:22px;
+padding:20px;
+margin-bottom:15px;
+}
+
+button,input{
+width:100%;
+padding:14px;
+border-radius:15px;
+margin:6px 0;
+font-size:16px;
+}
+
+button{
+border:0;
+color:white;
+}
+
+.red{background:#d62828}
+.orange{background:#f77f00}
+.blue{background:#007aff}
+.grey{background:#555}
+.green{background:#2a9d8f}
+
+.item{
+padding:12px;
+margin:6px;
+border-radius:12px;
+background:rgba(150,150,150,.15)
+}
+
+.timer{
+font-size:32px;
+text-align:center;
+font-weight:bold;
+}
 </style>
+
 </head>
+
 <body>
+
 <div class="card">
-<h2>Calpol & Nurofen Scheduler Pro</h2>
 
-<div class="button-group">
-<button onclick="dose('Calpol',6)">Calpol (6h)</button>
-<button onclick="dose('Nurofen',8)">Nurofen (8h)</button>
+<h2>👶 Child Profile</h2>
+
+<input id="child" placeholder="Child name">
+
+<button class="green" onclick="saveChild()">
+Save Profile
+</button>
+
+<button class="grey" onclick="toggleDark()">
+🌙 Dark Mode
+</button>
+
 </div>
 
-<div class="button-group">
-<button onclick="doseSequence('Calpol',6,'Nurofen',2)">Calpol then Nurofen (2h later)</button>
-<button onclick="doseSequence('Nurofen',8,'Calpol',2)">Nurofen then Calpol (2h later)</button>
+
+<div class="card">
+
+<h2>💊 Medication</h2>
+
+<button class="red" onclick="dose('Calpol',6)">
+Give Calpol Now
+</button>
+
+<button class="orange" onclick="dose('Nurofen',8)">
+Give Nurofen Now
+</button>
+
+<button class="blue" onclick="plan24()">
+Generate 24 Hour Schedule
+</button>
+
 </div>
 
-<h3>Next Dose</h3>
-<div id="next"></div>
 
-<h3>History</h3>
-<div id="history"></div>
+<div class="card">
 
-<button onclick="exportData()">Export History</button>
+<h3>✅ Status</h3>
+<div id="status"></div>
+
+<h3>⏰ Countdown</h3>
+<div class="timer" id="timer">--</div>
+
 </div>
+
+
+<div class="card">
+
+<h3>📅 24 Hour Plan</h3>
+<div id="plan"></div>
+
+</div>
+
+
+<div class="card">
+
+<h3>📆 Calendar History</h3>
+
+<div id="calendar"></div>
+
+<button class="blue" onclick="exportPDF()">
+Export PDF
+</button>
+
+<button class="grey" onclick="clearAll()">
+Clear History
+</button>
+
+</div>
+
 
 <script>
-if('serviceWorker' in navigator)
-navigator.serviceWorker.register('service-worker.js');
 
-if('Notification' in window)
-Notification.requestPermission();
+let log=JSON.parse(localStorage.log||"[]");
 
-let log=JSON.parse(localStorage.getItem('log')||'[]');
+child.value=localStorage.child||"";
+
+
+if(localStorage.dark=="yes")
+document.body.classList.add("dark");
+
+
+function toggleDark(){
+
+document.body.classList.toggle("dark");
+
+localStorage.dark=
+document.body.classList.contains("dark")?
+"yes":"no";
+
+}
+
+
+function saveChild(){
+
+localStorage.child=child.value;
+alert("Saved");
+
+}
+
 
 function dose(name,h){
+
 let now=new Date();
-let next=new Date(Date.now()+h*3600000);
 
-log.push({name:name,time:now,next:next});
-localStorage.setItem('log',JSON.stringify(log));
+let next=new Date(
+Date.now()+h*3600000
+);
 
+log.push({
+id:Date.now(),
+name:name,
+time:now.toISOString(),
+next:next.toISOString()
+});
+
+save();
 draw();
+
 }
 
-function doseSequence(name1,h1,name2,h2){
-let now=new Date();
-let next1=new Date(Date.now()+h1*3600000);
-let next2=new Date(Date.now()+(h1+h2)*3600000);
 
-log.push({name:name1,time:now,next:next1,sequence:true});
-log.push({name:name2,time:new Date(Date.now()+h1*3600000),next:next2,sequence:true});
-localStorage.setItem('log',JSON.stringify(log));
+function save(){
 
-draw();
+localStorage.log=JSON.stringify(log);
+
 }
+
 
 function draw(){
-history.innerHTML='';
-next.innerHTML='';
+
+calendar.innerHTML="";
+
+let days={};
 
 log.forEach(x=>{
-let entry='<div class="history-entry">'+x.name+' - '+new Date(x.time).toLocaleString();
-if(x.sequence)entry+=' <small>[sequence]</small>';
-entry+='</div>';
-history.innerHTML+=entry;
+
+let d=new Date(x.time).toLocaleDateString();
+
+if(!days[d])days[d]=[];
+
+days[d].push(x);
+
 });
 
-log.slice(-2).forEach(x=>{
-next.innerHTML+='<div class="dose-entry">'+x.name+' due '+new Date(x.next).toLocaleString()+'</div>';
+
+Object.keys(days).reverse().forEach(day=>{
+
+calendar.innerHTML+="📆 "+day;
+
+days[day].forEach(x=>{
+
+let icon=x.name=="Calpol"?"🔴":"🟠";
+
+calendar.innerHTML+=
+"<div class=item>"+icon+
+" "+x.name+
+"<br>"+new Date(x.time).toLocaleTimeString()+
+"<button class=grey onclick='del("+x.id+")'>Delete</button></div>";
+
 });
+
+});
+
 }
+
+
+function del(id){
+
+log=log.filter(x=>x.id!=id);
+save();
+draw();
+
+}
+
+
+function plan24(){
+
+plan.innerHTML="";
+
+let events=[];
+
+log.forEach(x=>{
+
+let t=new Date(x.next);
+let step=x.name=="Calpol"?6:8;
+
+for(let i=0;i<4;i++){
+
+events.push({
+name:x.name,
+time:new Date(t)
+});
+
+t.setHours(t.getHours()+step);
+
+}
+
+});
+
+
+events.sort((a,b)=>a.time-b.time);
+
+
+events.forEach(e=>{
+
+plan.innerHTML+=
+"<div class=item>"+e.name+
+" - "+e.time.toLocaleString()+"</div>";
+
+});
+
+}
+
 
 setInterval(()=>{
-let now=new Date();
-log.forEach(x=>{
-if(!x.done && now>=new Date(x.next)){
-navigator.serviceWorker.ready.then(r=>
-r.showNotification(x.name+' due'));
-x.done=true;
-localStorage.setItem('log',JSON.stringify(log));
-}
-});
-},60000);
 
-function exportData(){
-let blob=new Blob([JSON.stringify(log)]);
-let a=document.createElement('a');
-a.href=URL.createObjectURL(blob);
-a.download='dose-history.json';
-a.click();
+let next=[...log]
+.sort((a,b)=>new Date(a.next)-new Date(b.next))[0];
+
+if(next){
+
+let diff=new Date(next.next)-new Date();
+
+if(diff>0){
+
+timer.innerHTML=
+Math.floor(diff/3600000)+"h "+
+Math.floor(diff%3600000/60000)+"m";
+
+status.innerHTML="⏳ Wait";
+
+}else{
+
+timer.innerHTML="Dose Due";
+status.innerHTML="✅ Safe to give";
+
 }
+
+}
+
+},1000);
+
+
+function exportPDF(){
+
+let w=window.open();
+
+let txt="Dose Report\\n\\n";
+
+log.forEach(x=>{
+
+txt+=x.name+
+" "+
+new Date(x.time).toLocaleString()+
+"\\n";
+
+});
+
+w.document.write("<pre>"+txt+"</pre>");
+w.print();
+
+}
+
+
+function clearAll(){
+
+if(confirm("Clear all history?")){
+
+log=[];
+save();
+draw();
+
+}
+
+}
+
 
 draw();
+
 </script>
+
 </body>
 </html>
