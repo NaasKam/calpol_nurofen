@@ -1,6 +1,1 @@
-{
-"name":"Dose Scheduler Ultimate",
-"short_name":"Dose",
-"display":"standalone",
-"start_url":"index.html"
-}
+{"name":"Dose Scheduler","short_name":"Dose","display":"standalone","start_url":"index.html"}

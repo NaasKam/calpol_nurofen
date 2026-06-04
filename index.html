@@ -4,117 +4,36 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <link rel="manifest" href="manifest.json">
-
-<title>Dose Scheduler Ultimate</title>
+<title>Dose Scheduler</title>
 
 <style>
-:root{
---bg:#f2f2f7;
---card:white;
---text:black;
-}
-
-.dark{
---bg:#000;
---card:#1c1c1e;
---text:white;
-}
-
-body{
-font-family:-apple-system;
-background:var(--bg);
-color:var(--text);
-padding:20px;
-}
-
-.card{
-background:var(--card);
-border-radius:22px;
-padding:20px;
-margin-bottom:15px;
-}
-
-button,input{
-width:100%;
-padding:14px;
-border-radius:15px;
-margin:6px 0;
-font-size:16px;
-}
-
-button{
-border:0;
-color:white;
-}
-
+body{font-family:-apple-system;background:#f2f2f7;padding:20px}
+.card{background:white;border-radius:22px;padding:20px;margin-bottom:15px}
+button{width:100%;padding:15px;border:0;border-radius:15px;margin:6px 0;color:white;font-size:16px}
 .red{background:#d62828}
 .orange{background:#f77f00}
 .blue{background:#007aff}
 .grey{background:#555}
-.green{background:#2a9d8f}
-
-.item{
-padding:12px;
-margin:6px;
-border-radius:12px;
-background:rgba(150,150,150,.15)
-}
-
-.timer{
-font-size:32px;
-text-align:center;
-font-weight:bold;
-}
+.item{background:#eee;border-radius:12px;padding:10px;margin:5px}
 </style>
-
 </head>
 
 <body>
 
 <div class="card">
+<h2>💊 Dose Scheduler</h2>
 
-<h2>👶 Child Profile</h2>
-
-<input id="child" placeholder="Child name">
-
-<button class="green" onclick="saveChild()">
-Save Profile
-</button>
-
-<button class="grey" onclick="toggleDark()">
-🌙 Dark Mode
-</button>
-
-</div>
-
-
-<div class="card">
-
-<h2>💊 Medication</h2>
-
-<button class="red" onclick="dose('Calpol',6)">
+<button class="red" onclick="give('Calpol')">
 Give Calpol Now
 </button>
 
-<button class="orange" onclick="dose('Nurofen',8)">
+<button class="orange" onclick="give('Nurofen')">
 Give Nurofen Now
 </button>
 
-<button class="blue" onclick="plan24()">
-Generate 24 Hour Schedule
+<button class="blue" onclick="generatePlan()">
+Generate 24 Hour Plan
 </button>
-
-</div>
-
-
-<div class="card">
-
-<h3>✅ Status</h3>
-<div id="status"></div>
-
-<h3>⏰ Countdown</h3>
-<div class="timer" id="timer">--</div>
-
 </div>
 
 
@@ -123,21 +42,20 @@ Generate 24 Hour Schedule
 <h3>📅 24 Hour Plan</h3>
 <div id="plan"></div>
 
+<button class="blue" onclick="exportPlanPDF()">
+Export 24 Hour Plan PDF
+</button>
+
 </div>
 
 
 <div class="card">
 
-<h3>📆 Calendar History</h3>
+<h3>📖 Dose History</h3>
+<div id="history"></div>
 
-<div id="calendar"></div>
-
-<button class="blue" onclick="exportPDF()">
-Export PDF
-</button>
-
-<button class="grey" onclick="clearAll()">
-Clear History
+<button class="grey" onclick="clearHistory()">
+Delete History
 </button>
 
 </div>
@@ -145,212 +63,157 @@ Clear History
 
 <script>
 
-let log=JSON.parse(localStorage.log||"[]");
-
-child.value=localStorage.child||"";
-
-
-if(localStorage.dark=="yes")
-document.body.classList.add("dark");
+let historyData=JSON.parse(localStorage.historyData||"[]");
+let currentPlan=[];
 
 
-function toggleDark(){
-
-document.body.classList.toggle("dark");
-
-localStorage.dark=
-document.body.classList.contains("dark")?
-"yes":"no";
-
-}
-
-
-function saveChild(){
-
-localStorage.child=child.value;
-alert("Saved");
-
-}
-
-
-function dose(name,h){
+function give(type){
 
 let now=new Date();
 
-let next=new Date(
-Date.now()+h*3600000
-);
-
-log.push({
-id:Date.now(),
-name:name,
-time:now.toISOString(),
-next:next.toISOString()
+historyData.push({
+type:type,
+time:now.toISOString()
 });
 
-save();
-draw();
+localStorage.historyData=JSON.stringify(historyData);
+
+drawHistory();
 
 }
 
 
-function save(){
+function drawHistory(){
 
-localStorage.log=JSON.stringify(log);
+history.innerHTML="";
 
-}
+historyData.forEach(x=>{
 
-
-function draw(){
-
-calendar.innerHTML="";
-
-let days={};
-
-log.forEach(x=>{
-
-let d=new Date(x.time).toLocaleDateString();
-
-if(!days[d])days[d]=[];
-
-days[d].push(x);
-
-});
-
-
-Object.keys(days).reverse().forEach(day=>{
-
-calendar.innerHTML+="📆 "+day;
-
-days[day].forEach(x=>{
-
-let icon=x.name=="Calpol"?"🔴":"🟠";
-
-calendar.innerHTML+=
-"<div class=item>"+icon+
-" "+x.name+
-"<br>"+new Date(x.time).toLocaleTimeString()+
-"<button class=grey onclick='del("+x.id+")'>Delete</button></div>";
-
-});
+history.innerHTML +=
+"<div class=item>"+
+(x.type=="Calpol"?"🔴 ":"🟠 ")+
+x.type+
+"<br>"+
+new Date(x.time).toLocaleString()
++"</div>";
 
 });
 
 }
 
 
-function del(id){
-
-log=log.filter(x=>x.id!=id);
-save();
-draw();
-
-}
-
-
-function plan24(){
+function generatePlan(){
 
 plan.innerHTML="";
+currentPlan=[];
 
-let events=[];
+let lastCalpol=[...historyData]
+.reverse()
+.find(x=>x.type=="Calpol");
 
-log.forEach(x=>{
+if(!lastCalpol){
 
-let t=new Date(x.next);
-let step=x.name=="Calpol"?6:8;
+alert("Please enter a Calpol dose first");
+return;
 
-for(let i=0;i<4;i++){
+}
 
-events.push({
-name:x.name,
-time:new Date(t)
+let end=new Date(Date.now()+86400000);
+
+
+// Calpol every 6 hours
+
+let c=new Date(lastCalpol.time);
+
+while(c<=end){
+
+currentPlan.push({
+type:"Calpol",
+time:new Date(c)
 });
 
-t.setHours(t.getHours()+step);
+c.setHours(c.getHours()+6);
 
 }
+
+
+// Nurofen always 2 hours after Calpol start
+
+let n=new Date(lastCalpol.time);
+
+n.setHours(n.getHours()+2);
+
+while(n<=end){
+
+currentPlan.push({
+type:"Nurofen",
+time:new Date(n)
+});
+
+n.setHours(n.getHours()+8);
+
+}
+
+
+currentPlan.sort((a,b)=>a.time-b.time);
+
+
+currentPlan.forEach(x=>{
+
+plan.innerHTML +=
+"<div class=item>"+
+(x.type=="Calpol"?"🔴 ":"🟠 ")+
+x.time.toLocaleString()+
+" - "+
+x.type+
+"</div>";
 
 });
 
-
-events.sort((a,b)=>a.time-b.time);
-
-
-events.forEach(e=>{
-
-plan.innerHTML+=
-"<div class=item>"+e.name+
-" - "+e.time.toLocaleString()+"</div>";
-
-});
-
 }
 
 
-setInterval(()=>{
+function exportPlanPDF(){
 
-let next=[...log]
-.sort((a,b)=>new Date(a.next)-new Date(b.next))[0];
+let text="24 Hour Dose Plan\\n\\n";
 
-if(next){
+currentPlan.forEach(x=>{
 
-let diff=new Date(next.next)-new Date();
-
-if(diff>0){
-
-timer.innerHTML=
-Math.floor(diff/3600000)+"h "+
-Math.floor(diff%3600000/60000)+"m";
-
-status.innerHTML="⏳ Wait";
-
-}else{
-
-timer.innerHTML="Dose Due";
-status.innerHTML="✅ Safe to give";
-
-}
-
-}
-
-},1000);
-
-
-function exportPDF(){
-
-let w=window.open();
-
-let txt="Dose Report\\n\\n";
-
-log.forEach(x=>{
-
-txt+=x.name+
-" "+
-new Date(x.time).toLocaleString()+
+text +=
+x.time.toLocaleString()+
+" - "+
+x.type+
 "\\n";
 
 });
 
-w.document.write("<pre>"+txt+"</pre>");
+
+let w=window.open();
+
+w.document.write("<pre>"+text+"</pre>");
+
 w.print();
 
 }
 
 
-function clearAll(){
+function clearHistory(){
 
-if(confirm("Clear all history?")){
+if(confirm("Delete all dose history?")){
 
-log=[];
-save();
-draw();
+historyData=[];
+localStorage.historyData="[]";
+
+history.innerHTML="";
+plan.innerHTML="";
+currentPlan=[];
 
 }
 
 }
 
 
-draw();
+drawHistory();
 
 </script>
 
