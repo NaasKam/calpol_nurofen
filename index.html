@@ -4,46 +4,116 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <link rel="manifest" href="manifest.json">
+
 <title>Dose Scheduler</title>
 
 <style>
-body{font-family:-apple-system;background:#f2f2f7;padding:20px}
-.card{background:white;border-radius:22px;padding:20px;margin-bottom:15px}
-button{width:100%;padding:15px;border:0;border-radius:15px;margin:6px 0;color:white;font-size:16px}
+
+body{
+font-family:-apple-system;
+background:#f2f2f7;
+padding:20px
+}
+
+.card{
+background:white;
+border-radius:22px;
+padding:20px;
+margin-bottom:15px
+}
+
+button{
+width:100%;
+padding:16px;
+border:0;
+border-radius:18px;
+margin:8px 0;
+color:white;
+font-size:17px;
+transition:all .25s ease;
+}
+
+button:active{
+transform:scale(.94);
+filter:brightness(1.25);
+}
+
+.clicked{
+box-shadow:0 0 20px #34c759;
+transform:scale(1.03);
+}
+
 .red{background:#d62828}
 .orange{background:#f77f00}
 .blue{background:#007aff}
 .grey{background:#555}
-.item{background:#eee;border-radius:12px;padding:10px;margin:5px}
+
+.item{
+background:#eee;
+padding:10px;
+border-radius:12px;
+margin:5px
+}
+
+.timer{
+font-size:34px;
+font-weight:bold;
+text-align:center
+}
+
+.flash{
+animation:pulse .6s;
+}
+
+@keyframes pulse{
+0%{transform:scale(1)}
+50%{transform:scale(1.08)}
+100%{transform:scale(1)}
+}
+
 </style>
 </head>
 
 <body>
 
 <div class="card">
+
 <h2>💊 Dose Scheduler</h2>
 
-<button class="red" onclick="give('Calpol')">
-Give Calpol Now
+<button class="red" onclick="tap(this);give('Calpol')">
+🔴 Give Calpol Now
 </button>
 
-<button class="orange" onclick="give('Nurofen')">
-Give Nurofen Now
+<button class="orange" onclick="tap(this);give('Nurofen')">
+🟠 Give Nurofen Now
 </button>
 
-<button class="blue" onclick="generatePlan()">
-Generate 24 Hour Plan
+<button class="blue" onclick="tap(this);generatePlan()">
+📅 Generate 24 Hour Plan
 </button>
+
 </div>
 
 
 <div class="card">
 
-<h3>📅 24 Hour Plan</h3>
+<h3>⏰ Next Dose</h3>
+
+<div id="next"></div>
+
+<div class="timer" id="timer">--</div>
+
+</div>
+
+
+<div class="card">
+
+<h3>📅 Plan</h3>
+
 <div id="plan"></div>
 
-<button class="blue" onclick="exportPlanPDF()">
-Export 24 Hour Plan PDF
+<button class="blue" onclick="tap(this);exportPDF()">
+📄 Export Plan PDF
 </button>
 
 </div>
@@ -51,11 +121,12 @@ Export 24 Hour Plan PDF
 
 <div class="card">
 
-<h3>📖 Dose History</h3>
+<h3>📖 History</h3>
+
 <div id="history"></div>
 
-<button class="grey" onclick="clearHistory()">
-Delete History
+<button class="grey" onclick="tap(this);clearHistory()">
+🗑 Delete History
 </button>
 
 </div>
@@ -63,71 +134,58 @@ Delete History
 
 <script>
 
-let historyData=JSON.parse(localStorage.historyData||"[]");
-let currentPlan=[];
+let doses=JSON.parse(localStorage.doses||"[]");
+let planData=[];
+
+
+function tap(btn){
+
+btn.classList.add("clicked");
+
+setTimeout(()=>{
+btn.classList.remove("clicked");
+},400);
+
+}
 
 
 function give(type){
 
 let now=new Date();
 
-historyData.push({
+doses.push({
 type:type,
 time:now.toISOString()
 });
 
-localStorage.historyData=JSON.stringify(historyData);
+localStorage.doses=JSON.stringify(doses);
 
 drawHistory();
 
-}
-
-
-function drawHistory(){
-
-history.innerHTML="";
-
-historyData.forEach(x=>{
-
-history.innerHTML +=
-"<div class=item>"+
-(x.type=="Calpol"?"🔴 ":"🟠 ")+
-x.type+
-"<br>"+
-new Date(x.time).toLocaleString()
-+"</div>";
-
-});
+generatePlan();
 
 }
 
 
 function generatePlan(){
 
-plan.innerHTML="";
-currentPlan=[];
+planData=[];
 
-let lastCalpol=[...historyData]
+let calpol=[...doses]
 .reverse()
 .find(x=>x.type=="Calpol");
 
-if(!lastCalpol){
+if(!calpol)return;
 
-alert("Please enter a Calpol dose first");
-return;
-
-}
 
 let end=new Date(Date.now()+86400000);
 
 
-// Calpol every 6 hours
-
-let c=new Date(lastCalpol.time);
+let c=new Date(calpol.time);
 
 while(c<=end){
 
-currentPlan.push({
+planData.push({
 type:"Calpol",
 time:new Date(c)
 });
@@ -137,15 +195,14 @@ c.setHours(c.getHours()+6);
 }
 
 
-// Nurofen always 2 hours after Calpol start
-
-let n=new Date(lastCalpol.time);
+let n=new Date(calpol.time);
 
 n.setHours(n.getHours()+2);
 
+
 while(n<=end){
 
-currentPlan.push({
+planData.push({
 type:"Nurofen",
 time:new Date(n)
 });
@@ -155,17 +212,20 @@ n.setHours(n.getHours()+8);
 }
 
 
-currentPlan.sort((a,b)=>a.time-b.time);
+planData=planData
+.filter(x=>x.time>new Date())
+.sort((a,b)=>a.time-b.time);
 
 
-currentPlan.forEach(x=>{
+plan.innerHTML="";
 
-plan.innerHTML +=
+planData.forEach(x=>{
+
+plan.innerHTML+=
 "<div class=item>"+
 (x.type=="Calpol"?"🔴 ":"🟠 ")+
 x.time.toLocaleString()+
-" - "+
-x.type+
+" "+x.type+
 "</div>";
 
 });
@@ -173,24 +233,55 @@ x.type+
 }
 
 
-function exportPlanPDF(){
+setInterval(()=>{
 
-let text="24 Hour Dose Plan\\n\\n";
+if(planData.length){
 
-currentPlan.forEach(x=>{
+let x=planData[0];
 
-text +=
-x.time.toLocaleString()+
-" - "+
-x.type+
-"\\n";
+let diff=x.time-new Date();
+
+if(diff>0){
+
+timer.innerHTML=
+Math.floor(diff/3600000)+"h "+
+Math.floor(diff%3600000/60000)+"m "+
+Math.floor(diff%60000/1000)+"s";
+
+next.innerHTML=
+(x.type=="Calpol"?"🔴 ":"🟠 ")+x.type;
+
+}
+
+}
+
+},1000);
+
+
+function drawHistory(){
+
+history.innerHTML="";
+
+doses.forEach(x=>{
+
+history.innerHTML+=
+"<div class=item>"+
+x.type+" "+
+new Date(x.time).toLocaleString()
++"</div>";
 
 });
 
+}
+
+
+function exportPDF(){
 
 let w=window.open();
 
-w.document.write("<pre>"+text+"</pre>");
+w.document.write("<pre>"+
+JSON.stringify(planData,null,2)
++"</pre>");
 
 w.print();
 
@@ -199,21 +290,19 @@ w.print();
 
 function clearHistory(){
 
-if(confirm("Delete all dose history?")){
+doses=[];
+localStorage.doses="[]";
 
-historyData=[];
-localStorage.historyData="[]";
+drawHistory();
 
-history.innerHTML="";
 plan.innerHTML="";
-currentPlan=[];
-
-}
+timer.innerHTML="--";
 
 }
 
 
 drawHistory();
+generatePlan();
 
 </script>
 
