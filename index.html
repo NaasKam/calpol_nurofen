@@ -1,45 +1,86 @@
+
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="theme-color" content="#ffffff">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="apple-mobile-web-app-capable" content="yes">
 <link rel="manifest" href="manifest.json">
-<title>Calpol & Nurofen Scheduler</title>
+<title>Dose Pro</title>
 <style>
-body{font-family:Arial,sans-serif;max-width:700px;margin:20px auto;padding:20px;background:#f5f5f5}
-.card{background:#fff;padding:20px;border-radius:12px;box-shadow:0 2px 10px rgba(0,0,0,.1)}
-input,button{width:100%;padding:12px;margin-top:10px;box-sizing:border-box}
-table{width:100%;border-collapse:collapse;margin-top:20px}
-th,td{border:1px solid #ddd;padding:10px}
-.calpol{background:#e8f5e9}.nurofen{background:#e3f2fd}
+body{font-family:-apple-system;background:#f2f2f7;padding:20px}
+.card{background:white;padding:20px;border-radius:18px}
+button{width:100%;padding:15px;margin:8px;border-radius:12px}
 </style>
 </head>
 <body>
 <div class="card">
-<h1>Calpol & Nurofen Scheduler</h1>
-<input type="datetime-local" id="startTime">
-<button onclick="generateSchedule()">Generate 24-Hour Schedule</button>
-<div id="schedule"></div>
+<h2>Calpol & Nurofen Scheduler Pro</h2>
+
+<button onclick="dose('Calpol',6)">Give Calpol Now</button>
+<button onclick="dose('Nurofen',8)">Give Nurofen Now</button>
+
+<h3>Next Dose</h3>
+<div id="next"></div>
+
+<h3>History</h3>
+<div id="history"></div>
+
+<button onclick="exportData()">Export History</button>
 </div>
+
 <script>
-if('serviceWorker' in navigator){navigator.serviceWorker.register('./service-worker.js');}
-function generateSchedule(){
-const startValue=document.getElementById('startTime').value;
-if(!startValue){alert('Enter first Calpol dose');return;}
-const schedule=[];
-const start=new Date(startValue);
-const end=new Date(start); end.setHours(end.getHours()+24);
-let c=new Date(start);
-while(c<=end){schedule.push({m:'Calpol',t:new Date(c)});c.setHours(c.getHours()+6);}
-let n=new Date(start); n.setHours(n.getHours()+2);
-while(n<=end){schedule.push({m:'Nurofen',t:new Date(n)});n.setHours(n.getHours()+8);}
-schedule.sort((a,b)=>a.t-b.t);
-let html='<table><tr><th>Time</th><th>Medication</th></tr>';
-schedule.forEach(x=>html+=`<tr class="${x.m==='Calpol'?'calpol':'nurofen'}"><td>${x.t.toLocaleString()}</td><td>${x.m}</td></tr>`);
-html+='</table>';
-document.getElementById('schedule').innerHTML=html;
+if('serviceWorker' in navigator)
+navigator.serviceWorker.register('service-worker.js');
+
+if('Notification' in window)
+Notification.requestPermission();
+
+let log=JSON.parse(localStorage.getItem('log')||'[]');
+
+function dose(name,h){
+let now=new Date();
+let next=new Date(Date.now()+h*3600000);
+
+log.push({name:name,time:now,next:next});
+localStorage.setItem('log',JSON.stringify(log));
+
+draw();
 }
+
+function draw(){
+history.innerHTML='';
+next.innerHTML='';
+
+log.forEach(x=>{
+history.innerHTML+=x.name+' - '+new Date(x.time).toLocaleString()+'<br>';
+});
+
+log.slice(-2).forEach(x=>{
+next.innerHTML+=x.name+' due '+new Date(x.next).toLocaleString()+'<br>';
+});
+}
+
+setInterval(()=>{
+let now=new Date();
+log.forEach(x=>{
+if(!x.done && now>=new Date(x.next)){
+navigator.serviceWorker.ready.then(r=>
+r.showNotification(x.name+' due'));
+x.done=true;
+localStorage.setItem('log',JSON.stringify(log));
+}
+});
+},60000);
+
+function exportData(){
+let blob=new Blob([JSON.stringify(log)]);
+let a=document.createElement('a');
+a.href=URL.createObjectURL(blob);
+a.download='dose-history.json';
+a.click();
+}
+
+draw();
 </script>
 </body>
 </html>
