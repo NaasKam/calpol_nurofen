@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#ffffff">
+<link rel="manifest" href="manifest.json">
+<title>Calpol & Nurofen Scheduler</title>
+<style>
+body{font-family:Arial,sans-serif;max-width:700px;margin:20px auto;padding:20px;background:#f5f5f5}
+.card{background:#fff;padding:20px;border-radius:12px;box-shadow:0 2px 10px rgba(0,0,0,.1)}
+input,button{width:100%;padding:12px;margin-top:10px;box-sizing:border-box}
+table{width:100%;border-collapse:collapse;margin-top:20px}
+th,td{border:1px solid #ddd;padding:10px}
+.calpol{background:#e8f5e9}.nurofen{background:#e3f2fd}
+</style>
+</head>
+<body>
+<div class="card">
+<h1>Calpol & Nurofen Scheduler</h1>
+<input type="datetime-local" id="startTime">
+<button onclick="generateSchedule()">Generate 24-Hour Schedule</button>
+<div id="schedule"></div>
+</div>
+<script>
+if('serviceWorker' in navigator){navigator.serviceWorker.register('./service-worker.js');}
+function generateSchedule(){
+const startValue=document.getElementById('startTime').value;
+if(!startValue){alert('Enter first Calpol dose');return;}
+const schedule=[];
+const start=new Date(startValue);
+const end=new Date(start); end.setHours(end.getHours()+24);
+let c=new Date(start);
+while(c<=end){schedule.push({m:'Calpol',t:new Date(c)});c.setHours(c.getHours()+6);}
+let n=new Date(start); n.setHours(n.getHours()+2);
+while(n<=end){schedule.push({m:'Nurofen',t:new Date(n)});n.setHours(n.getHours()+8);}
+schedule.sort((a,b)=>a.t-b.t);
+let html='<table><tr><th>Time</th><th>Medication</th></tr>';
+schedule.forEach(x=>html+=`<tr class="${x.m==='Calpol'?'calpol':'nurofen'}"><td>${x.t.toLocaleString()}</td><td>${x.m}</td></tr>`);
+html+='</table>';
+document.getElementById('schedule').innerHTML=html;
+}
+</script>
+</body>
+</html>
