@@ -8,8 +8,9 @@
 <style>
 body{font-family:-apple-system;background:#f2f2f7;padding:20px}
 .card{background:white;border-radius:22px;padding:20px;margin-bottom:15px}
-button,select{
-width:100%;padding:15px;border-radius:16px;margin:6px 0;font-size:16px
+button,input{
+width:100%;padding:15px;border-radius:16px;margin:6px 0;
+font-size:16px;box-sizing:border-box
 }
 button{border:0;color:white}
 .red{background:#d62828}
@@ -17,22 +18,92 @@ button{border:0;color:white}
 .blue{background:#007aff}
 .green{background:#34c759}
 .grey{background:#555}
-.item{background:#eee;border-radius:12px;padding:10px;margin:6px}
-.done{opacity:.5;text-decoration:line-through}
-.timer{text-align:center;font-size:32px;font-weight:bold}
+.item{background:#eee;padding:10px;border-radius:12px;margin:6px}
+.small{font-size:13px;line-height:1.5}
 .credit{text-align:center;font-size:9px;opacity:.45}
 </style>
 </head>
 
 <body>
 
+
+<!-- PAGE 1 TERMS -->
+
+<div id="terms">
+
 <div class="card">
+
+<h2>💊 Welcome to CalNur</h2>
+
+<div class="small">
+
+<p>
+⚠️ CalNur is not a medical device and does not provide medical advice.
+</p>
+
+<p>
+It is only a reminder tool that calculates times based on the timing rules set inside the app.
+</p>
+
+<ul>
+<li>🔴 Calpol default: every 6 hours</li>
+<li>🟠 Nurofen default: every 8 hours</li>
+<li>🔴➡️🟠 First Nurofen default: 2 hours after Calpol</li>
+</ul>
+
+<p>
+Always read medication instructions and consult your doctor, pharmacist or healthcare professional before giving or taking medication.
+</p>
+
+</div>
+
+<button class="green" onclick="goRules()">
+I Understand & Continue
+</button>
+
+</div>
+
+</div>
+
+
+
+<!-- PAGE 2 RULES -->
+
+<div id="rulesPage" style="display:none">
+
+<div class="card">
+
+<h2>⚙️ Timing Rules</h2>
+
+<label>🔴 Calpol interval (hours)</label>
+<input id="calpolRule" type="number" value="6">
+
+<label>🟠 Nurofen interval (hours)</label>
+<input id="nurofenRule" type="number" value="8">
+
+<label>🔴➡️🟠 First Nurofen after Calpol (hours)</label>
+<input id="delayRule" type="number" value="2">
+
+
+<button class="green" onclick="saveRules()">
+Save & Open App
+</button>
+
+</div>
+
+</div>
+
+
+
+
+<!-- PAGE 3 MAIN APP -->
+
+<div id="app" style="display:none">
+
+
+<div class="card">
+
 <h2>💊 CalNur</h2>
-
-<select id="hour"></select>
-<select id="minute"></select>
-
-<button class="green" onclick="setNow()">Use Current Time</button>
 
 <button class="red" onclick="startPlan('calpol')">
 🔴 Start Calpol Plan
@@ -43,7 +114,11 @@ button{border:0;color:white}
 </button>
 
 <button class="blue" onclick="startPlan('both')">
-🔴🟠 Start Calpol + Nurofen Plan
+🔴🟠 Start Combined Plan
+</button>
+
+<button class="grey" onclick="showRules()">
+⚙️ Edit Timing Rules
 </button>
 
 </div>
@@ -51,32 +126,13 @@ button{border:0;color:white}
 
 <div class="card">
 
-<h3>⏰ Next Dose</h3>
-
-<div id="next"></div>
-<div id="timer" class="timer">--</div>
-
-</div>
-
-
-<div class="card">
-
-<h3>📅 Today's Checklist</h3>
+<h3>📅 Checklist</h3>
 
 <div id="list"></div>
 
-<button class="blue" onclick="showHistory()">📖 View History</button>
-
-<button class="grey" onclick="clearData()">🗑 Clear Data</button>
-
-</div>
-
-
-<div class="card" id="historyBox" style="display:none">
-
-<h3>📖 History</h3>
-
-<div id="history"></div>
+<button class="grey" onclick="clearData()">
+🗑 Clear Data
+</button>
 
 </div>
 
@@ -86,80 +142,82 @@ Created by AI genius Kamil K
 </div>
 
 
+</div>
+
+
 <script>
 
-let checklist=JSON.parse(localStorage.checklist||"[]");
-
-let historyData=JSON.parse(localStorage.historyData||"[]");
-
-let savedPlan=localStorage.planType||"";
-
-let savedDate=localStorage.date||"";
+let rules=JSON.parse(localStorage.rules||JSON.stringify({
+calpol:6,
+nurofen:8,
+delay:2
+}));
 
 
-for(let i=0;i<24;i++)
-hour.innerHTML+="<option>"+String(i).padStart(2,'0')+"</option>";
+if(localStorage.accepted=="yes"){
 
-for(let i=0;i<60;i++)
-minute.innerHTML+="<option>"+String(i).padStart(2,'0')+"</option>";
-
-
-function setNow(){
-
-let d=new Date();
-
-hour.value=String(d.getHours()).padStart(2,'0');
-
-minute.value=String(d.getMinutes()).padStart(2,'0');
+terms.style.display="none";
+app.style.display="block";
 
 }
 
-setNow();
 
+function goRules(){
 
-// new day reset checklist but keep plan
-
-let today=new Date().toDateString();
-
-if(savedDate && savedDate!=today && savedPlan){
-
-startPlan(savedPlan);
+terms.style.display="none";
+rulesPage.style.display="block";
 
 }
 
-localStorage.date=today;
+
+function saveRules(){
+
+rules={
+calpol:Number(calpolRule.value),
+nurofen:Number(nurofenRule.value),
+delay:Number(delayRule.value)
+};
+
+localStorage.rules=JSON.stringify(rules);
+localStorage.accepted="yes";
+
+rulesPage.style.display="none";
+app.style.display="block";
+
+}
+
+
+function showRules(){
+
+app.style.display="none";
+
+rulesPage.style.display="block";
+
+calpolRule.value=rules.calpol;
+nurofenRule.value=rules.nurofen;
+delayRule.value=rules.delay;
+
+}
 
 
 function startPlan(type){
 
-localStorage.planType=type;
+let plan=[];
 
-let start=new Date();
-
-start.setHours(hour.value);
-
-start.setMinutes(minute.value);
-
-let end=new Date(start);
+let now=new Date();
+let end=new Date();
 end.setHours(end.getHours()+24);
-
-checklist=[];
 
 
 if(type=="calpol"||type=="both"){
 
-let c=new Date(start);
+let c=new Date(now);
 
 while(c<=end){
 
-checklist.push({
-med:"Calpol",
-time:c.toISOString(),
-done:false,
-skip:false
-});
+plan.push(["🔴 Calpol",new Date(c)]);
 
-c.setHours(c.getHours()+6);
+c.setHours(c.getHours()+rules.calpol);
 
 }
 
@@ -168,18 +226,13 @@ c.setHours(c.getHours()+6);
 
 if(type=="nurofen"){
 
-let n=new Date(start);
+let n=new Date(now);
 
 while(n<=end){
 
-checklist.push({
-med:"Nurofen",
-time:n.toISOString(),
-done:false,
-skip:false
-});
+plan.push(["🟠 Nurofen",new Date(n)]);
 
-n.setHours(n.getHours()+8);
+n.setHours(n.getHours()+rules.nurofen);
 
 }
 
@@ -188,107 +241,31 @@ n.setHours(n.getHours()+8);
 
 if(type=="both"){
 
-let n=new Date(start);
-n.setHours(n.getHours()+2);
+let n=new Date(now);
+
+n.setHours(n.getHours()+rules.delay);
 
 while(n<=end){
 
-checklist.push({
-med:"Nurofen",
-time:n.toISOString(),
-done:false,
-skip:false
-});
+plan.push(["🟠 Nurofen",new Date(n)]);
 
-n.setHours(n.getHours()+8);
+n.setHours(n.getHours()+rules.nurofen);
 
 }
 
 }
 
 
-checklist.sort((a,b)=>new Date(a.time)-new Date(b.time));
-
-save();
-draw();
-
-}
-
-
-function taken(i){
-
-checklist[i].done=true;
-
-historyData.push({
-med:checklist[i].med,
-time:new Date().toISOString()
-});
-
-save();
-draw();
-
-}
-
-
-function skip(i){
-
-checklist[i].skip=true;
-
-save();
-draw();
-
-}
-
-
-function save(){
-
-localStorage.checklist=JSON.stringify(checklist);
-
-localStorage.historyData=JSON.stringify(historyData);
-
-}
-
-
-function draw(){
+plan.sort((a,b)=>a[1]-b[1]);
 
 list.innerHTML="";
 
-checklist
-.sort((a,b)=>new Date(a.time)-new Date(b.time))
-.forEach((x,i)=>{
+plan.forEach(x=>{
 
 list.innerHTML+=
-"<div class='item "+(x.done?'done':'')+"'>"+ 
-(x.done?"✅ ":"")+
-(x.skip?"⏭️ ":"")+
-(x.med=="Calpol"?"🔴 ":"🟠 ")+
-new Date(x.time).toLocaleTimeString()+
-" "+x.med+
-
-(!x.done&&!x.skip?
-"<button class=green onclick='taken("+i+")'>Dose Taken</button>"+
-"<button class=grey onclick='skip("+i+")'>Skip</button>"
-:"")+
-
-"</div>";
-
-});
-
-}
-
-
-function showHistory(){
-
-historyBox.style.display="block";
-
-history.innerHTML="";
-
-historyData.forEach(x=>{
-
-history.innerHTML+=
 "<div class=item>"+
-x.med+" "+
-new Date(x.time).toLocaleString()+
+x[1].toLocaleTimeString()+
+" "+x[0]+
 "</div>";
 
 });
@@ -298,38 +275,11 @@ new Date(x.time).toLocaleString()+
 
 function clearData(){
 
-if(confirm("Clear all data?")){
-
 localStorage.clear();
+
 location.reload();
 
 }
-
-}
-
-
-setInterval(()=>{
-
-let nextDose=checklist.find(x=>
-!x.done&&!x.skip&&new Date(x.time)>new Date()
-);
-
-if(nextDose){
-
-let diff=new Date(nextDose.time)-new Date();
-
-next.innerHTML=nextDose.med;
-
-timer.innerHTML=
-Math.floor(diff/3600000)+"h "+
-Math.floor(diff%3600000/60000)+"m";
-
-}
-
-},1000);
-
-
-draw();
 
 </script>
 
