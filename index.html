@@ -3,74 +3,33 @@
 <head>
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="CalNur">
+<link rel="apple-touch-icon" href="icon-180.png">
 <link rel="manifest" href="manifest.json">
 
-<title>Dose Scheduler</title>
+<title>CalNur</title>
 
 <style>
-
-body{
-font-family:-apple-system;
-background:#f2f2f7;
-padding:20px
-}
-
-.card{
-background:white;
-border-radius:22px;
-padding:20px;
-margin-bottom:15px
-}
-
+body{font-family:-apple-system;background:#f2f2f7;padding:20px}
+.card{background:white;border-radius:22px;padding:20px;margin-bottom:15px}
 button{
-width:100%;
-padding:16px;
-border:0;
-border-radius:18px;
-margin:8px 0;
-color:white;
-font-size:17px;
-transition:all .25s ease;
+width:100%;padding:16px;border:0;border-radius:18px;
+margin:8px 0;color:white;font-size:17px;transition:.25s
 }
-
-button:active{
-transform:scale(.94);
-filter:brightness(1.25);
-}
-
-.clicked{
-box-shadow:0 0 20px #34c759;
-transform:scale(1.03);
-}
-
+button:active{transform:scale(.94);filter:brightness(1.2)}
 .red{background:#d62828}
 .orange{background:#f77f00}
 .blue{background:#007aff}
 .grey{background:#555}
+.item{background:#eee;padding:12px;border-radius:12px;margin:6px}
+.timer{text-align:center;font-size:32px;font-weight:bold}
 
-.item{
-background:#eee;
-padding:10px;
-border-radius:12px;
-margin:5px
+.credit{
+text-align:center;
+font-size:9px;
+opacity:.45;
+margin-top:30px;
 }
-
-.timer{
-font-size:34px;
-font-weight:bold;
-text-align:center
-}
-
-.flash{
-animation:pulse .6s;
-}
-
-@keyframes pulse{
-0%{transform:scale(1)}
-50%{transform:scale(1.08)}
-100%{transform:scale(1)}
-}
-
 </style>
 </head>
 
@@ -78,18 +37,18 @@ animation:pulse .6s;
 
 <div class="card">
 
-<h2>💊 Dose Scheduler</h2>
+<h2>💊 CalNur</h2>
 
-<button class="red" onclick="tap(this);give('Calpol')">
-🔴 Give Calpol Now
+<button class="red" onclick="startPlan('calpol')">
+🔴 Start Calpol Plan
 </button>
 
-<button class="orange" onclick="tap(this);give('Nurofen')">
-🟠 Give Nurofen Now
+<button class="orange" onclick="startPlan('nurofen')">
+🟠 Start Nurofen Plan
 </button>
 
-<button class="blue" onclick="tap(this);generatePlan()">
-📅 Generate 24 Hour Plan
+<button class="blue" onclick="startPlan('both')">
+🔴🟠 Start Calpol + Nurofen Plan
 </button>
 
 </div>
@@ -98,9 +57,7 @@ animation:pulse .6s;
 <div class="card">
 
 <h3>⏰ Next Dose</h3>
-
 <div id="next"></div>
-
 <div class="timer" id="timer">--</div>
 
 </div>
@@ -108,124 +65,95 @@ animation:pulse .6s;
 
 <div class="card">
 
-<h3>📅 Plan</h3>
-
+<h3>📅 24 Hour Plan</h3>
 <div id="plan"></div>
 
-<button class="blue" onclick="tap(this);exportPDF()">
-📄 Export Plan PDF
-</button>
+<button class="blue" onclick="exportPDF()">📄 Export PDF</button>
+<button class="grey" onclick="clearPlan()">🗑 Clear Plan</button>
 
 </div>
 
 
-<div class="card">
-
-<h3>📖 History</h3>
-
-<div id="history"></div>
-
-<button class="grey" onclick="tap(this);clearHistory()">
-🗑 Delete History
-</button>
-
+<div class="credit">
+Created by AI genius Kamil K
 </div>
 
 
 <script>
 
-let doses=JSON.parse(localStorage.doses||"[]");
-let planData=[];
+let planData=JSON.parse(localStorage.plan||"[]");
 
 
-function tap(btn){
-
-btn.classList.add("clicked");
-
-setTimeout(()=>{
-btn.classList.remove("clicked");
-},400);
-
-}
-
-
-function give(type){
+function startPlan(type){
 
 let now=new Date();
-
-doses.push({
-type:type,
-time:now.toISOString()
-});
-
-localStorage.doses=JSON.stringify(doses);
-
-drawHistory();
-
-generatePlan();
-
-}
-
-
-function generatePlan(){
+let end=new Date(Date.now()+86400000);
 
 planData=[];
 
-let calpol=[...doses]
-.reverse()
-.find(x=>x.type=="Calpol");
+if(type=="calpol"||type=="both"){
 
-if(!calpol)return;
-
-
-let end=new Date(Date.now()+86400000);
-
-
-let c=new Date(calpol.time);
+let c=new Date(now);
 
 while(c<=end){
 
-planData.push({
-type:"Calpol",
-time:new Date(c)
-});
-
+planData.push({type:"Calpol",time:c.toISOString()});
 c.setHours(c.getHours()+6);
 
 }
 
+}
 
-let n=new Date(calpol.time);
 
-n.setHours(n.getHours()+2);
+if(type=="nurofen"){
 
+let n=new Date(now);
 
 while(n<=end){
 
-planData.push({
-type:"Nurofen",
-time:new Date(n)
-});
-
+planData.push({type:"Nurofen",time:n.toISOString()});
 n.setHours(n.getHours()+8);
 
 }
 
+}
 
-planData=planData
-.filter(x=>x.time>new Date())
-.sort((a,b)=>a.time-b.time);
 
+if(type=="both"){
+
+let n=new Date(now);
+n.setHours(n.getHours()+2);
+
+while(n<=end){
+
+planData.push({type:"Nurofen",time:n.toISOString()});
+n.setHours(n.getHours()+8);
+
+}
+
+}
+
+
+planData.sort((a,b)=>new Date(a.time)-new Date(b.time));
+
+localStorage.plan=JSON.stringify(planData);
+
+draw();
+
+}
+
+
+function draw(){
 
 plan.innerHTML="";
 
 planData.forEach(x=>{
 
-plan.innerHTML+=
+plan.innerHTML +=
 "<div class=item>"+
 (x.type=="Calpol"?"🔴 ":"🟠 ")+
-x.time.toLocaleString()+
-" "+x.type+
+new Date(x.time).toLocaleString()+
+" - "+x.type+
 "</div>";
 
 });
@@ -235,74 +163,51 @@ x.time.toLocaleString()+
 
 setInterval(()=>{
 
-if(planData.length){
+let upcoming=planData.filter(x=>new Date(x.time)>new Date())[0];
 
-let x=planData[0];
+if(upcoming){
 
-let diff=x.time-new Date();
+let diff=new Date(upcoming.time)-new Date();
 
-if(diff>0){
+next.innerHTML=(upcoming.type=="Calpol"?"🔴 ":"🟠 ")+upcoming.type;
 
 timer.innerHTML=
 Math.floor(diff/3600000)+"h "+
 Math.floor(diff%3600000/60000)+"m "+
 Math.floor(diff%60000/1000)+"s";
 
-next.innerHTML=
-(x.type=="Calpol"?"🔴 ":"🟠 ")+x.type;
-
-}
-
 }
 
 },1000);
-
-
-function drawHistory(){
-
-history.innerHTML="";
-
-doses.forEach(x=>{
-
-history.innerHTML+=
-"<div class=item>"+
-x.type+" "+
-new Date(x.time).toLocaleString()
-+"</div>";
-
-});
-
-}
 
 
 function exportPDF(){
 
 let w=window.open();
 
-w.document.write("<pre>"+
-JSON.stringify(planData,null,2)
-+"</pre>");
+let text="CalNur 24 Hour Plan\n\n";
 
+planData.forEach(x=>{
+text+=new Date(x.time).toLocaleString()+" - "+x.type+"\n";
+});
+
+w.document.write("<pre>"+text+"</pre>");
 w.print();
 
 }
 
 
-function clearHistory(){
+function clearPlan(){
 
-doses=[];
-localStorage.doses="[]";
-
-drawHistory();
-
-plan.innerHTML="";
+planData=[];
+localStorage.plan="[]";
+draw();
 timer.innerHTML="--";
 
 }
 
 
-drawHistory();
-generatePlan();
+draw();
 
 </script>
 
