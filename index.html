@@ -3,32 +3,52 @@
 <head>
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="CalNur">
-<link rel="apple-touch-icon" href="icon-180.png">
-<link rel="manifest" href="manifest.json">
-
 <title>CalNur</title>
 
 <style>
 body{font-family:-apple-system;background:#f2f2f7;padding:20px}
 .card{background:white;border-radius:22px;padding:20px;margin-bottom:15px}
-button{
-width:100%;padding:16px;border:0;border-radius:18px;
-margin:8px 0;color:white;font-size:17px;transition:.25s
-}
-button:active{transform:scale(.94);filter:brightness(1.2)}
+button{width:100%;padding:15px;border:0;border-radius:16px;margin:6px;color:white;font-size:16px}
 .red{background:#d62828}
 .orange{background:#f77f00}
 .blue{background:#007aff}
+.green{background:#34c759}
 .grey{background:#555}
-.item{background:#eee;padding:12px;border-radius:12px;margin:6px}
-.timer{text-align:center;font-size:32px;font-weight:bold}
+
+.picker{
+display:flex;
+justify-content:center;
+gap:20px;
+font-size:42px;
+font-weight:bold;
+}
+
+select{
+font-size:38px;
+height:90px;
+border:0;
+background:#eee;
+border-radius:15px;
+text-align:center;
+}
+
+.item{
+background:#eee;
+border-radius:12px;
+padding:10px;
+margin:6px
+}
+
+.timer{
+font-size:32px;
+text-align:center;
+font-weight:bold
+}
 
 .credit{
-text-align:center;
 font-size:9px;
 opacity:.45;
-margin-top:30px;
+text-align:center
 }
 </style>
 </head>
@@ -37,17 +57,36 @@ margin-top:30px;
 
 <div class="card">
 
+<h2>🗒 Start Time</h2>
+
+<div class="picker">
+
+<select id="hour"></select>
+:
+<select id="minute"></select>
+
+</div>
+
+<button class="green" onclick="setNow()">
+Use Current Time
+</button>
+
+</div>
+
+
+<div class="card">
+
 <h2>💊 CalNur</h2>
 
-<button class="red" onclick="startPlan('calpol')">
+<button class="red" onclick="createPlan('calpol')">
 🔴 Start Calpol Plan
 </button>
 
-<button class="orange" onclick="startPlan('nurofen')">
+<button class="orange" onclick="createPlan('nurofen')">
 🟠 Start Nurofen Plan
 </button>
 
-<button class="blue" onclick="startPlan('both')">
+<button class="blue" onclick="createPlan('both')">
 🔴🟠 Start Calpol + Nurofen Plan
 </button>
 
@@ -57,7 +96,9 @@ margin-top:30px;
 <div class="card">
 
 <h3>⏰ Next Dose</h3>
+
 <div id="next"></div>
+
 <div class="timer" id="timer">--</div>
 
 </div>
@@ -65,11 +106,9 @@ margin-top:30px;
 
 <div class="card">
 
-<h3>📅 24 Hour Plan</h3>
-<div id="plan"></div>
+<h3>📅 Checklist</h3>
 
-<button class="blue" onclick="exportPDF()">📄 Export PDF</button>
-<button class="grey" onclick="clearPlan()">🗑 Clear Plan</button>
+<div id="plan"></div>
 
 </div>
 
@@ -81,23 +120,79 @@ Created by AI genius Kamil K
 
 <script>
 
-let planData=JSON.parse(localStorage.plan||"[]");
+let doses=JSON.parse(localStorage.doses||"[]");
 
 
-function startPlan(type){
+// create iOS style wheels
 
-let now=new Date();
-let end=new Date(Date.now()+86400000);
+for(let i=0;i<24;i++){
 
-planData=[];
+hour.innerHTML+=
+"<option>"+String(i).padStart(2,'0')+"</option>";
+
+}
+
+for(let i=0;i<60;i++){
+
+minute.innerHTML+=
+"<option>"+String(i).padStart(2,'0')+"</option>";
+
+}
+
+
+function setNow(){
+
+let d=new Date();
+
+hour.value=String(d.getHours()).padStart(2,'0');
+
+minute.value=String(d.getMinutes()).padStart(2,'0');
+
+}
+
+
+setNow();
+
+
+function selectedTime(){
+
+let d=new Date();
+
+d.setHours(hour.value);
+
+d.setMinutes(minute.value);
+
+d.setSeconds(0);
+
+return d;
+
+}
+
+
+function createPlan(type){
+
+let start=selectedTime();
+
+let end=new Date(start);
+
+end.setHours(end.getHours()+24);
+
+doses=[];
+
 
 if(type=="calpol"||type=="both"){
 
-let c=new Date(now);
+let c=new Date(start);
 
 while(c<=end){
 
-planData.push({type:"Calpol",time:c.toISOString()});
+doses.push({
+med:"Calpol",
+time:c.toISOString(),
+done:false,
+skip:false
+});
+
 c.setHours(c.getHours()+6);
 
 }
@@ -107,11 +202,17 @@ c.setHours(c.getHours()+6);
 
 if(type=="nurofen"){
 
-let n=new Date(now);
+let n=new Date(start);
 
 while(n<=end){
 
-planData.push({type:"Nurofen",time:n.toISOString()});
+doses.push({
+med:"Nurofen",
+time:n.toISOString(),
+done:false,
+skip:false
+});
+
 n.setHours(n.getHours()+8);
 
 }
@@ -121,12 +222,19 @@ n.setHours(n.getHours()+8);
 
 if(type=="both"){
 
-let n=new Date(now);
+let n=new Date(start);
+
 n.setHours(n.getHours()+2);
 
 while(n<=end){
 
-planData.push({type:"Nurofen",time:n.toISOString()});
+doses.push({
+med:"Nurofen",
+time:n.toISOString(),
+done:false,
+skip:false
+});
+
 n.setHours(n.getHours()+8);
 
 }
@@ -134,11 +242,35 @@ n.setHours(n.getHours()+8);
 }
 
 
-planData.sort((a,b)=>new Date(a.time)-new Date(b.time));
-
-localStorage.plan=JSON.stringify(planData);
-
+save();
 draw();
+
+}
+
+
+function taken(i){
+
+doses[i].done=true;
+
+save();
+draw();
+
+}
+
+
+function skip(i){
+
+doses[i].skip=true;
+
+save();
+draw();
+
+}
+
+
+function save(){
+
+localStorage.doses=JSON.stringify(doses);
 
 }
 
@@ -147,13 +279,21 @@ function draw(){
 
 plan.innerHTML="";
 
-planData.forEach(x=>{
+doses.forEach((x,i)=>{
 
-plan.innerHTML +=
+plan.innerHTML+=
 "<div class=item>"+
-(x.type=="Calpol"?"🔴 ":"🟠 ")+
-new Date(x.time).toLocaleString()+
-" - "+x.type+
+(x.done?"✅ ":"")+
+(x.skip?"⏭️ ":"")+
+(x.med=="Calpol"?"🔴 ":"🟠 ")+
+new Date(x.time).toLocaleTimeString()+
+" "+x.med+
+
+(!x.done&&!x.skip?
+"<button class=green onclick='taken("+i+")'>Dose Taken</button>"+
+"<button class=grey onclick='skip("+i+")'>Skip</button>"
+:"")+
+
 "</div>";
 
 });
@@ -163,48 +303,24 @@ new Date(x.time).toLocaleString()+
 
 setInterval(()=>{
 
-let upcoming=planData.filter(x=>new Date(x.time)>new Date())[0];
+let nextDose=doses.find(x=>
+!x.done&&!x.skip&&new Date(x.time)>new Date()
+);
 
-if(upcoming){
+if(nextDose){
 
-let diff=new Date(upcoming.time)-new Date();
+let diff=new Date(nextDose.time)-new Date();
 
-next.innerHTML=(upcoming.type=="Calpol"?"🔴 ":"🟠 ")+upcoming.type;
+next.innerHTML=
+(nextDose.med=="Calpol"?"🔴 ":"🟠 ")+nextDose.med;
 
 timer.innerHTML=
 Math.floor(diff/3600000)+"h "+
-Math.floor(diff%3600000/60000)+"m "+
-Math.floor(diff%60000/1000)+"s";
+Math.floor(diff%3600000/60000)+"m";
 
 }
 
 },1000);
-
-
-function exportPDF(){
-
-let w=window.open();
-
-let text="CalNur 24 Hour Plan\n\n";
-
-planData.forEach(x=>{
-text+=new Date(x.time).toLocaleString()+" - "+x.type+"\n";
-});
-
-w.document.write("<pre>"+text+"</pre>");
-w.print();
-
-}
-
-
-function clearPlan(){
-
-planData=[];
-localStorage.plan="[]";
-draw();
-timer.innerHTML="--";
-
-}
 
 
 draw();
