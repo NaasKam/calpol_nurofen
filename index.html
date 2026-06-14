@@ -3,456 +3,275 @@
 <head>
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="theme-color" content="#007aff">
 <title>CalNur</title>
 
 <style>
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);min-height:100vh;padding:20px 15px 100px}
+.page{display:none}.active{display:block}
 
-:root {
-  --primary: #007aff;
-  --red: #d62828;
-  --orange: #f77f00;
-  --green: #34c759;
-  --grey: #555;
-  --light-grey: #f2f2f7;
-  --card-bg: #ffffff;
-  --text-primary: #000;
-  --text-secondary: #666;
-  --border-radius: 24px;
-  --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
+/* Header */
+.header{text-align:center;color:white;margin-bottom:30px;padding-top:10px}
+.header h1{font-size:32px;font-weight:700;margin-bottom:5px}
+.header p{font-size:14px;opacity:0.9}
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --light-grey: #1c1c1e;
-    --card-bg: #2c2c2e;
-    --text-primary: #fff;
-    --text-secondary: #999;
-  }
-}
+/* Cards */
+.card{background:white;border-radius:20px;padding:20px;margin-bottom:15px;box-shadow:0 10px 30px rgba(0,0,0,0.1)}
+.card h2{color:#333;font-size:20px;margin-bottom:15px;display:flex;align-items:center;gap:10px}
+.card h3{color:#555;font-size:16px;margin:15px 0 10px;font-weight:600}
+.card p{color:#666;font-size:14px;line-height:1.6;margin-bottom:10px}
 
-body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-  background: var(--light-grey);
-  color: var(--text-primary);
-  padding: 16px;
-  min-height: 100vh;
-}
+/* Buttons */
+button,input,select{width:100%;padding:14px;border-radius:12px;margin:8px 0;font-size:15px;border:none;cursor:pointer;font-weight:500;transition:all 0.3s}
+input,select{background:#f5f5f7;color:#333}
+button{color:white}
+button:active{transform:scale(0.98);opacity:0.8}
 
-.page {
-  display: none;
-  animation: fadeIn 0.4s ease-in;
-}
+.red{background:linear-gradient(135deg,#ff6b6b,#ee5a6f)}
+.orange{background:linear-gradient(135deg,#ffa502,#ff8c00)}
+.blue{background:linear-gradient(135deg,#007aff,#0051d5)}
+.green{background:linear-gradient(135deg,#34c759,#00c853)}
+.grey{background:#888}
+.white{background:white;color:#333;border:2px solid #e0e0e0}
 
-.page.active {
-  display: block;
-}
+/* Layout Helpers */
+.row{display:flex;gap:12px;margin:8px 0}
+.row div{flex:1}
+.row input,.row select{margin:0}
 
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
-}
+/* Timer Display */
+.timer-container{background:linear-gradient(135deg,#f093fb 0%,#f5576c 100%);border-radius:16px;padding:25px;text-align:center;color:white;margin:15px 0;box-shadow:0 10px 25px rgba(0,0,0,0.15)}
+.timer-label{font-size:14px;opacity:0.9;margin-bottom:10px}
+.timer{font-size:48px;font-weight:700;font-variant-numeric:tabular-nums}
+.timer-med{font-size:18px;margin-top:10px;opacity:0.95}
 
-.card {
-  background: var(--card-bg);
-  border-radius: var(--border-radius);
-  padding: 24px;
-  margin-bottom: 16px;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
-  transition: var(--transition);
-}
+/* Dose Item */
+.item{background:#f9f9f9;border-radius:12px;padding:14px;margin:8px 0;border-left:4px solid #667eea;display:flex;justify-content:space-between;align-items:center}
+.item.calpol{border-left-color:#ff6b6b}
+.item.nurofen{border-left-color:#ffa502}
+.item.done{opacity:0.6;background:#efefef}
+.item.skip{opacity:0.5;text-decoration:line-through}
+.item-info{flex:1}
+.item-time{font-size:16px;font-weight:600;color:#333}
+.item-med{font-size:13px;color:#999;margin-top:3px}
+.item-status{font-size:12px;margin-top:4px}
+.item-actions{display:flex;gap:8px;flex-direction:column;min-width:100px}
+.item-actions button{margin:4px 0;padding:10px;font-size:12px}
 
-.card:hover {
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
-}
+/* Quick Action Grid */
+.action-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:15px 0}
+.action-grid button{margin:0}
 
-h2 {
-  font-size: 28px;
-  font-weight: 700;
-  margin-bottom: 20px;
-  letter-spacing: -0.5px;
-}
+/* Welcome Screen */
+.welcome-content{color:white;text-align:center}
+.welcome-content h2{font-size:28px;margin:20px 0 15px}
+.welcome-content p{font-size:15px;line-height:1.8;margin-bottom:12px;opacity:0.95}
+.warning-box{background:rgba(255,255,255,0.15);border-radius:12px;padding:15px;margin:15px 0;font-size:14px;backdrop-filter:blur(10px)}
 
-h3 {
-  font-size: 18px;
-  font-weight: 600;
-  margin-bottom: 16px;
-  color: var(--text-primary);
-}
+/* Tabs */
+.tabs{position:fixed;bottom:0;left:0;right:0;background:white;display:flex;gap:2px;padding:8px 10px;box-shadow:0 -2px 20px rgba(0,0,0,0.1)}
+.tabs button{color:#666;font-size:11px;padding:8px 0;border-radius:8px;margin:0}
+.tabs button:hover{background:#f0f0f0}
+.tabs .blue{color:white;background:#007aff}
 
-p {
-  font-size: 15px;
-  line-height: 1.6;
-  color: var(--text-secondary);
-  margin-bottom: 12px;
-}
+/* History */
+.hist-item{background:#f9f9f9;border-radius:12px;padding:12px;margin:8px 0;display:flex;justify-content:space-between;align-items:center;border-left:4px solid #667eea}
+.hist-item.calpol{border-left-color:#ff6b6b}
+.hist-item.nurofen{border-left-color:#ffa502}
+.hist-info{flex:1}
+.hist-med{font-size:15px;font-weight:600;color:#333}
+.hist-time{font-size:13px;color:#999;margin-top:2px}
+.hist-actions{display:flex;gap:6px}
+.hist-actions button{padding:8px 12px;font-size:11px;margin:0}
 
-label {
-  display: block;
-  font-weight: 600;
-  font-size: 15px;
-  margin-bottom: 8px;
-  color: var(--text-primary);
-}
+/* Rules Input */
+.rule-input{margin:15px 0}
+.rule-input label{display:block;font-weight:600;color:#333;margin-bottom:6px;font-size:14px}
+.rule-input input{margin:0}
 
-input, select {
-  width: 100%;
-  padding: 14px 16px;
-  border-radius: 12px;
-  margin: 8px 0;
-  font-size: 16px;
-  border: 2px solid var(--light-grey);
-  background: var(--card-bg);
-  color: var(--text-primary);
-  transition: var(--transition);
-  font-family: inherit;
-}
-
-input:focus, select:focus {
-  outline: none;
-  border-color: var(--primary);
-  box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.1);
-}
-
-button {
-  width: 100%;
-  padding: 16px;
-  border: 0;
-  border-radius: 12px;
-  font-size: 16px;
-  font-weight: 600;
-  color: white;
-  cursor: pointer;
-  transition: var(--transition);
-  margin: 8px 0;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-button:active {
-  transform: scale(0.98);
-}
-
-.red { background: var(--red); }
-.red:hover { box-shadow: 0 8px 20px rgba(214, 40, 40, 0.3); }
-
-.orange { background: var(--orange); }
-.orange:hover { box-shadow: 0 8px 20px rgba(247, 127, 0, 0.3); }
-
-.blue { background: var(--primary); }
-.blue:hover { box-shadow: 0 8px 20px rgba(0, 122, 255, 0.3); }
-
-.green { background: var(--green); }
-.green:hover { box-shadow: 0 8px 20px rgba(52, 199, 89, 0.3); }
-
-.grey { background: var(--grey); }
-.grey:hover { box-shadow: 0 8px 20px rgba(85, 85, 85, 0.3); }
-
-.row {
-  display: flex;
-  gap: 12px;
-  margin-bottom: 8px;
-}
-
-.row div {
-  flex: 1;
-}
-
-.row label {
-  margin-bottom: 8px;
-  text-align: center;
-}
-
-.row select {
-  margin: 0;
-}
-
-.item {
-  background: var(--light-grey);
-  border-radius: 16px;
-  padding: 16px;
-  margin: 8px 0;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  transition: var(--transition);
-  border-left: 4px solid transparent;
-}
-
-.item:hover {
-  background: rgba(0, 122, 255, 0.05);
-}
-
-.item.done {
-  opacity: 0.6;
-  text-decoration: line-through;
-  border-left-color: var(--green);
-}
-
-.item-text {
-  flex: 1;
-  font-size: 15px;
-  font-weight: 500;
-}
-
-.item-actions {
-  display: flex;
-  gap: 8px;
-}
-
-.item-actions button {
-  padding: 8px 12px;
-  margin: 0;
-  width: auto;
-  font-size: 13px;
-  border-radius: 8px;
-}
-
-.timer {
-  text-align: center;
-  font-size: 48px;
-  font-weight: 700;
-  letter-spacing: 1px;
-  background: linear-gradient(135deg, var(--primary), #0051d5);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  margin: 24px 0;
-  font-variant-numeric: tabular-nums;
-}
-
-.next-dose-info {
-  text-align: center;
-  font-size: 18px;
-  font-weight: 600;
-  margin-bottom: 16px;
-  color: var(--text-primary);
-}
-
-.credit {
-  text-align: center;
-  font-size: 12px;
-  opacity: 0.5;
-  margin-top: 20px;
-  color: var(--text-secondary);
-}
-
-.warning {
-  background: rgba(255, 193, 7, 0.1);
-  border-left: 4px solid #ffc107;
-  border-radius: 8px;
-  padding: 12px;
-  margin: 12px 0;
-  font-size: 14px;
-  color: var(--text-primary);
-}
-
-.info-box {
-  background: rgba(0, 122, 255, 0.1);
-  border-left: 4px solid var(--primary);
-  border-radius: 8px;
-  padding: 12px;
-  margin: 12px 0;
-  font-size: 14px;
-  line-height: 1.5;
-}
-
-.button-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-}
-
-.button-grid button {
-  margin: 0;
-  width: 100%;
-}
-
-@media (min-width: 768px) {
-  body {
-    max-width: 500px;
-    margin: 0 auto;
-    padding: 24px;
-  }
-  
-  .button-grid {
-    grid-template-columns: 1fr 1fr;
-  }
-}
-
-@media (max-width: 480px) {
-  h2 {
-    font-size: 24px;
-  }
-  
-  .timer {
-    font-size: 36px;
-  }
-  
-  .button-grid {
-    grid-template-columns: 1fr;
-  }
-}
+/* Disclaimer */
+.disclaimer{font-size:11px;color:#999;text-align:center;margin-top:20px;padding:10px;opacity:0.7}
 </style>
 </head>
 
 <body>
 
+<!-- Welcome Page -->
 <div id="welcome" class="page active">
+<div class="header">
+<h1>💊 CalNur</h1>
+<p>Medication Reminder App</p>
+</div>
+<div class="card welcome-content">
+<p style="opacity:0.8">⚠️ CalNur is not a medical device and does not provide medical advice.</p>
+
+<div class="warning-box" style="margin:20px 0">
+<p style="margin-bottom:10px;font-weight:600">⚠️ Important Disclaimer</p>
+<p>This app only creates reminders based on your selected timing rules.</p>
+<p style="margin-top:8px">Always read medication instructions and consult a doctor/pharmacist before giving medication.</p>
+</div>
+
+<p style="margin-top:15px"><strong>Default Settings:</strong></p>
+<p style="margin:12px 0"><span style="font-size:18px">🔴</span> Calpol every 6 hours</p>
+<p style="margin:12px 0"><span style="font-size:18px">🟠</span> Nurofen every 8 hours</p>
+<p style="margin:12px 0"><span style="font-size:18px">🔴➡️🟠</span> First Nurofen 2 hours after Calpol</p>
+
+<button class="green" onclick="goRules()" style="margin-top:25px">I Understand & Continue →</button>
+
+<div class="disclaimer">Created by Kamil K</div>
+</div>
+</div>
+
+<!-- Rules Page -->
+<div id="rulesPage" class="page">
+<div class="header">
+<h1>⚙️ Timing Rules</h1>
+<p>Customize your medication schedule</p>
+</div>
+
 <div class="card">
-<h2>💊 Welcome to CalNur</h2>
-
-<div class="warning">
-⚠️ CalNur is not a medical device and does not provide medical advice. Always consult a healthcare professional.
-</div>
-
-<p>This app creates reminders based on your selected timing rules for managing medication schedules.</p>
-
-<div class="info-box">
-<strong>📋 Default Settings:</strong><br>
-🔴 Calpol: every 6 hours<br>
-🟠 Nurofen: every 8 hours<br>
-🔴➡️🟠 First Nurofen: 2 hours after Calpol
-</div>
-
-<p style="font-size: 13px; margin-top: 16px;">Always read medication instructions and consult a doctor or pharmacist before giving medication to children.</p>
-
-<button class="green" onclick="page('rules')" style="margin-top: 20px;">I Understand & Continue</button>
-
-</div>
-</div>
-
-
-<div id="rules" class="page">
-<div class="card">
-<h2>⚙️ Timing Rules</h2>
-
+<div class="rule-input">
 <label>🔴 Calpol Interval (hours)</label>
-<input id="calRule" type="number" min="1" max="24" placeholder="e.g., 6">
-
-<label style="margin-top: 16px;">🟠 Nurofen Interval (hours)</label>
-<input id="nurRule" type="number" min="1" max="24" placeholder="e.g., 8">
-
-<label style="margin-top: 16px;">🔴➡️🟠 First Nurofen After Calpol (hours)</label>
-<input id="delayRule" type="number" min="0" max="12" placeholder="e.g., 2">
-
-<div style="display: flex; gap: 12px; margin-top: 20px;">
-<button class="green" onclick="saveRules()" style="flex: 1;">Save Rules</button>
-<button class="grey" onclick="page('main')" style="flex: 1;">Cancel</button>
+<input id="calRule" type="number" value="6">
 </div>
 
+<div class="rule-input">
+<label>🟠 Nurofen Interval (hours)</label>
+<input id="nurRule" type="number" value="8">
+</div>
+
+<div class="rule-input">
+<label>🔴➡️🟠 First Nurofen After Calpol (hours)</label>
+<input id="delayRule" type="number" value="2">
+</div>
+
+<button class="green" onclick="saveRules()">Save & Continue →</button>
 </div>
 </div>
 
+<!-- Setup Page -->
+<div id="setup" class="page">
+<div class="header">
+<h1>🕒 Start Your Plan</h1>
+<p>Set up your medication schedule</p>
+</div>
 
-<div id="main" class="page">
 <div class="card">
-<h2>🕒 Starting Time</h2>
-
-<p style="margin-bottom: 16px;">Select when to start the medication schedule</p>
-
+<h2>⏰ Starting Time</h2>
 <div class="row">
 <div>
-<label>Hours</label>
+<label style="display:block;font-weight:600;color:#333;margin-bottom:6px;font-size:13px">Hours</label>
 <select id="hour"></select>
 </div>
-
 <div>
-<label>Minutes</label>
+<label style="display:block;font-weight:600;color:#333;margin-bottom:6px;font-size:13px">Minutes</label>
 <select id="minute"></select>
 </div>
 </div>
-
-<button class="blue" onclick="currentTime()">📍 Use Current Time</button>
-
+<button class="blue" onclick="useCurrent()">⏱ Use Current Time</button>
 </div>
-
 
 <div class="card">
 <h2>💊 Choose Plan</h2>
-
-<p style="margin-bottom: 20px;">Select which medication schedule to start</p>
-
-<button class="red" onclick="createPlan('calpol')">🔴 Start Calpol Only</button>
-
-<button class="orange" onclick="createPlan('nurofen')">🟠 Start Nurofen Only</button>
-
-<button class="blue" onclick="createPlan('both')">🔴🟠 Start Combined Plan</button>
-
-<button class="grey" onclick="editRules()" style="margin-top: 20px;">⚙️ Edit Timing Rules</button>
-
+<button class="red" onclick="createPlan('calpol')">🔴 Calpol Only</button>
+<button class="orange" onclick="createPlan('nurofen')">🟠 Nurofen Only</button>
+<button class="blue" onclick="createPlan('both')">🔴 + 🟠 Combined Plan</button>
+<button class="white" onclick="editRules()">⚙️ Edit Rules</button>
 </div>
 
-<div class="credit">Created with ❤️ by Kamil K</div>
-
+<div class="disclaimer">Created by Kamil K</div>
 </div>
 
-
+<!-- Tracker Page -->
 <div id="tracker" class="page">
-<div class="card">
-<h2>💊 CalNur Tracker</h2>
-
-<button class="grey" onclick="page('main')">⬅️ Change Plan</button>
-
+<div class="header">
+<h1>💊 CalNur Tracker</h1>
+<p>Your medication schedule</p>
 </div>
 
-
 <div class="card">
-<h3>⏰ Next Dose</h3>
-
-<div class="next-dose-info" id="next">Loading...</div>
-
-<div class="timer" id="timer">--:--:--</div>
-
+<h3>⏰ Next Dose Countdown</h3>
+<div class="timer-container">
+<div class="timer-label">Next dose in</div>
+<div id="timer" class="timer">--:--:--</div>
+<div id="nextDose" class="timer-med">Loading...</div>
 </div>
-
+</div>
 
 <div class="card">
 <h3>📅 Today's Schedule</h3>
-
 <div id="list"></div>
-
 </div>
-
 
 <div class="card">
-<div class="button-grid">
-<button class="blue" onclick="historyView()">📖 History</button>
+<div class="action-grid">
+<button class="blue" onclick="viewHistory()">📖 History</button>
 <button class="blue" onclick="exportPDF()">📄 Export</button>
 </div>
-
-<button class="grey" onclick="clearData()" style="margin-top: 12px;">🗑️ Clear Plan</button>
-
+<button class="grey" onclick="changePlan()">⬅️ Change Plan</button>
+<button class="red" onclick="clearData()">🗑 Clear Data</button>
 </div>
 
-<div class="credit">Created with ❤️ by Kamil K</div>
-
+<div class="disclaimer">Created by Kamil K</div>
 </div>
 
+<!-- Quick Dose Page -->
+<div id="quick" class="page">
+<div class="header">
+<h1>💊 Give Medication</h1>
+<p>Log a quick dose</p>
+</div>
+
+<div class="card">
+<div class="action-grid">
+<button class="red" onclick="quickDose('Calpol')">🔴 Give Calpol</button>
+<button class="orange" onclick="quickDose('Nurofen')">🟠 Give Nurofen</button>
+</div>
+
+<h3>📋 Last Given</h3>
+<div id="lastDose" style="margin-top:12px;color:#666;font-size:14px;line-height:1.8"></div>
+</div>
+
+<div class="disclaimer">Created by Kamil K</div>
+</div>
+
+<!-- History Page -->
+<div id="histPage" class="page">
+<div class="header">
+<h1>📖 History</h1>
+<p>All recorded doses</p>
+</div>
+
+<div class="card">
+<div id="histList"></div>
+<button class="blue" onclick="exportPDF()" style="margin-top:15px">📤 Export History</button>
+</div>
+
+<div class="disclaimer">Created by Kamil K</div>
+</div>
+
+<!-- Bottom Navigation -->
+<div id="tabbar" class="tabs" style="display:none">
+<button class="blue" onclick="show('tracker')" style="flex:1">📅 Plan</button>
+<button class="blue" onclick="openQuick()" style="flex:1">💊 Dose</button>
+<button class="blue" onclick="openHist()" style="flex:1">📖 History</button>
+</div>
 
 <script>
 
-function page(id){
+function show(id){
 document.querySelectorAll(".page").forEach(x=>x.classList.remove("active"));
 document.getElementById(id).classList.add("active");
+if(localStorage.accepted=='yes')tabbar.style.display='flex';
 }
 
-
 let rules=JSON.parse(localStorage.rules||'{"cal":6,"nur":8,"delay":2}');
-let checklist=JSON.parse(localStorage.checklist||"[]");
+let doses=JSON.parse(localStorage.doses||"[]");
 let historyData=JSON.parse(localStorage.historyData||"[]");
-let savedPlan=localStorage.savedPlan||"";
-
 
 calRule.value=rules.cal;
 nurRule.value=rules.nur;
 delayRule.value=rules.delay;
-
 
 for(let i=0;i<24;i++)
 hour.innerHTML+="<option>"+String(i).padStart(2,'0')+"</option>";
@@ -460,83 +279,62 @@ hour.innerHTML+="<option>"+String(i).padStart(2,'0')+"</option>";
 for(let i=0;i<60;i++)
 minute.innerHTML+="<option>"+String(i).padStart(2,'0')+"</option>";
 
-
-function currentTime(){
+function useCurrent(){
 let d=new Date();
 hour.value=String(d.getHours()).padStart(2,'0');
 minute.value=String(d.getMinutes()).padStart(2,'0');
 }
 
-currentTime();
-
+useCurrent();
 
 if(localStorage.accepted=="yes"){
-if(checklist.length>0)
-page("tracker");
+if(doses.length>0)
+show("tracker");
 else
-page("main");
+show("setup");
 }
 
+function goRules(){
+show("rulesPage");
+}
 
 function saveRules(){
-
 rules={
 cal:Number(calRule.value),
 nur:Number(nurRule.value),
 delay:Number(delayRule.value)
 };
-
 localStorage.rules=JSON.stringify(rules);
 localStorage.accepted="yes";
-
-page("main");
-
+show("setup");
 }
 
-
 function editRules(){
-
 calRule.value=rules.cal;
 nurRule.value=rules.nur;
 delayRule.value=rules.delay;
-
-page("rules");
-
+show("rulesPage");
 }
 
-
 function createPlan(type){
-
-localStorage.savedPlan=type;
-
 let start=new Date();
-
 start.setHours(hour.value);
 start.setMinutes(minute.value);
-
 let end=new Date(start);
 end.setHours(end.getHours()+24);
-
-checklist=[];
-
+doses=[];
 
 function add(m,t,step){
-
 while(t<=end){
-
-checklist.push({
+doses.push({
 med:m,
 time:t.toISOString(),
 done:false,
 skip:false
 });
-
 t.setHours(t.getHours()+step);
-
 }
-
 }
-
 
 if(type=="calpol"||type=="both")
 add("Calpol",new Date(start),rules.cal);
@@ -545,172 +343,140 @@ if(type=="nurofen")
 add("Nurofen",new Date(start),rules.nur);
 
 if(type=="both"){
-
 let n=new Date(start);
 n.setHours(n.getHours()+rules.delay);
-
 add("Nurofen",n,rules.nur);
-
 }
 
-
-checklist.sort((a,b)=>new Date(a.time)-new Date(b.time));
-
+doses.sort((a,b)=>new Date(a.time)-new Date(b.time));
 save();
-
 draw();
-
-page("tracker");
-
+show("tracker");
 }
-
 
 function taken(i){
-
-checklist[i].done=true;
-
-historyData.push({
-med:checklist[i].med,
-time:checklist[i].time
-});
-
+doses[i].done=true;
+historyData.push(doses[i]);
 save();
-
 draw();
-
 }
-
 
 function skip(i){
-
-checklist[i].skip=true;
+doses[i].skip=true;
 save();
 draw();
-
 }
 
+function changePlan(){
+show("setup");
+}
 
 function save(){
-
-localStorage.checklist=JSON.stringify(checklist);
+localStorage.doses=JSON.stringify(doses);
 localStorage.historyData=JSON.stringify(historyData);
-
 }
 
-
 function draw(){
-
 list.innerHTML="";
-
-checklist.forEach((x,i)=>{
+doses.forEach((x,i)=>{
+let isActive=!x.done&&!x.skip;
+let med=x.med=="Calpol"?"calpol":"nurofen";
+let time=new Date(x.time).toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'});
+let icon=x.med=="Calpol"?"🔴":"🟠";
 
 list.innerHTML+=
-"<div class='item "+(x.done||x.skip?'done':'')+"'>"+
-"<div class='item-text'>"+
-(x.done?"✅ ":x.skip?"⏭️ ":"")+
-(x.med=="Calpol"?"🔴 ":"🟠 ")+
-new Date(x.time).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})+
-" "+x.med+
+"<div class='item "+med+(x.done?" done":"")+(x.skip?" skip":"")+"'>"+
+"<div class='item-info'>"+
+"<div class='item-time'>"+icon+" "+time+"</div>"+
+"<div class='item-med'>"+x.med+(x.done?" ✅":"")+(x.skip?" ⏭️":"")+"</div>"+
 "</div>"+
-(!x.done&&!x.skip?
+(isActive?
 "<div class='item-actions'>"+
 "<button class='green' onclick='taken("+i+")'>✅</button>"+
 "<button class='grey' onclick='skip("+i+")'>⏭️</button>"+
 "</div>"
 :"")+
 "</div>";
-
 });
-
 }
-
 
 setInterval(()=>{
-
-let n=checklist.find(x=>!x.done&&!x.skip&&new Date(x.time)>new Date());
-
+let n=doses.find(x=>!x.done&&!x.skip&&new Date(x.time)>new Date());
 if(n){
-
 let diff=new Date(n.time)-new Date();
-
-next.innerHTML=(n.med=="Calpol"?"🔴 ":"🟠 ")+n.med+" due in";
-
 let hours=Math.floor(diff/3600000);
-let minutes=Math.floor(diff%3600000/60000);
-let seconds=Math.floor(diff%60000/1000);
-
-timer.innerHTML=
-String(hours).padStart(2,'0')+":"+
-String(minutes).padStart(2,'0')+":"+
-String(seconds).padStart(2,'0');
-
-}else{
-
-next.innerHTML="✅ All doses completed";
-timer.innerHTML="--:--:--";
-
+let mins=Math.floor(diff%3600000/60000);
+let secs=Math.floor(diff%60000/1000);
+nextDose.innerHTML=(n.med=="Calpol"?"🔴":"🟠")+" "+n.med+" due";
+timer.innerHTML=String(hours).padStart(2,'0')+":"+String(mins).padStart(2,'0')+":"+String(secs).padStart(2,'0');
 }
-
 },1000);
 
-
-function historyView(){
-
-if(historyData.length===0){
-alert("No medication history yet.");
-return;
+function viewHistory(){
+alert(historyData.map(x=>x.med+" "+new Date(x.time).toLocaleString()).join("\n")||"No history");
 }
-
-let msg=historyData.map(x=>
-(x.med=="Calpol"?"🔴 ":"🟠 ")+
-x.med+" - "+
-new Date(x.time).toLocaleString()
-).join("\n");
-
-alert("📖 Medication History\n\n"+msg);
-
-}
-
 
 function exportPDF(){
-
-let content="CalNur - Medication History\n";
-content+="Generated: "+new Date().toLocaleString()+"\n";
-content+="================================\n\n";
-
-if(historyData.length===0){
-content+="No medication history to export.";
-}else{
-content+=historyData.map(x=>
-(x.med=="Calpol"?"🔴 ":"🟠 ")+
-x.med+" - "+
-new Date(x.time).toLocaleString()
-).join("\n");
-}
-
 let w=window.open();
-w.document.write("<pre style='font-family:monospace;padding:20px;'>"+content+"</pre>");
+w.document.write("<pre style='font-size:12px;white-space:pre-wrap'>CalNur Medication History\n\n"+historyData.map(x=>x.med+" - "+new Date(x.time).toLocaleString()).join("\n")+"</pre>");
 w.print();
-
 }
-
 
 function clearData(){
-
-if(confirm("Clear the current plan and return to setup?")){
-
-checklist=[];
-
-localStorage.removeItem("checklist");
-
+if(confirm("Clear all CalNur data? This deletes plan, countdown, checklist and full medication history.\n\nExport history before continuing if required.")){
+doses=[];
+localStorage.removeItem("doses");
+historyData=[];
+localStorage.removeItem("historyData");
 draw();
-
-page("main");
-
+show("setup");
+}
 }
 
+function quickDose(m){
+let d={med:m,time:new Date().toISOString(),done:true,quick:true};
+historyData.push(d);
+save();
+alert(m+" given at "+new Date().toLocaleTimeString());
+openQuick();
 }
 
+function openQuick(){
+show('quick');
+let c=[...historyData].reverse().find(x=>x.med=='Calpol');
+let n=[...historyData].reverse().find(x=>x.med=='Nurofen');
+lastDose.innerHTML="<div style='margin:8px 0'>🔴 Last Calpol:<br><strong>"+(c?new Date(c.time).toLocaleString():"Never")+"</strong></div><div style='margin:8px 0'>🟠 Last Nurofen:<br><strong>"+(n?new Date(n.time).toLocaleString():"Never")+"</strong></div>";
+}
+
+function openHist(){
+show('histPage');
+histList.innerHTML="";
+if(historyData.length==0){
+histList.innerHTML="<p style='text-align:center;color:#999;padding:20px'>No history yet</p>";
+return;
+}
+historyData.forEach((x,i)=>{
+let med=x.med=="Calpol"?"calpol":"nurofen";
+let icon=x.med=="Calpol"?"🔴":"🟠";
+histList.innerHTML+="<div class='hist-item "+med+"'>"+
+"<div class='hist-info'>"+
+"<div class='hist-med'>"+icon+" "+x.med+"</div>"+
+"<div class='hist-time'>"+new Date(x.time).toLocaleString()+"</div>"+
+"</div>"+
+"<div class='hist-actions'>"+
+"<button class='blue' onclick='editHist("+i+")'>✏️</button>"+
+"<button class='grey' onclick='delHist("+i+")'>🗑</button>"+
+"</div>"+
+"</div>";
+});
+}
+
+function editHist(i){
+let t=prompt("Edit date/time",new Date(historyData[i].time).toLocaleString());
+if(t){historyData[i].time=new Date(t).toISOString();save();openHist();}
+}
+
+function delHist(i){if(confirm("Delete this entry?")){historyData.splice(i,1);save();openHist();}}
 
 draw();
 
